@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useMutation } from '@apollo/client';
+import Swal from "sweetalert2";
 
 const COLONIAS_LIST = gql`
     query GetColonias($filter: Int) {
@@ -19,6 +20,48 @@ const MUNICIPIOS_LIST = gql`
     }
 `;
 
+const INSERT_CLIENT = gql`
+    mutation InsertClient($input: ClientInput) {
+        insertClient(input: $input) {
+            idCliente
+            nombre
+            aPaterno
+            aMaterno
+            municipio
+            municipio_n
+            colonia
+            colonia_n
+            calle
+            numero_ext
+            celular
+            distinguido
+            img_domicilio
+            descripcion
+        }
+    }
+`;
+
+const CLIENTS_LIST = gql`
+    query GetClients($input: ClientsInput) {
+        getClients(input: $input) {
+            idCliente
+            nombre
+            aPaterno
+            aMaterno
+            municipio
+            municipio_n
+            colonia
+            colonia_n
+            calle
+            numero_ext
+            celular
+            distinguido
+            img_domicilio
+            descripcion
+        }
+    }
+`;
+
 const NewClientForm = () => {
     
     const [name, setName] = useState("");
@@ -33,34 +76,119 @@ const NewClientForm = () => {
     const [distinguido, setDistinguido] = useState(0);
     const [description, setDescription] = useState("");
 
+    const [errorName, setErrorName] = useState(false);
+    const [errorLastNameP, setErrorLastNameP] = useState(false);
+    const [errorLastNameM, setErrorLastNameM] = useState(false);
+    const [errorPhone, setErrorPhone] = useState(false);
+    const [errorPhoneT, setErrorPhoneT] = useState(false);
+    const [errorMunicipio, setErrorMunicipio] = useState(false);
+    const [errorColonia, setErrorColonia] = useState(false);
+    const [errorStreet, setErrorStreet] = useState(false);
+    const [errorNumber, setErrorNumber] = useState(false);
+    const [errorFile, setErrorFile] = useState(false);
+    const [errorDistinguido, setErrorDistinguido] = useState(false);
+    const [errorDescription, setErrorDescription] = useState(false);
+
+    const [matchesClients, setMatchesClients] = useState([]);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(municipio)
         }
     });
+    
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST);
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        console.log("Nombre:", name);
-        console.log("Paterno:", lastNameP);
-        console.log("Materno:", lastNameM);
-        console.log("Teléfono:", phone);
-        console.log("Municipio:", municipio);
-        console.log("Colonia:", colonia);
-        console.log("Calle: ", street);
-        console.log("Número exterior: ", number);
-        console.log("Imagen:", image);
-        console.log("Distinguido:", distinguido);
-        console.log("Descripción:", description);
+    const [insertClient, { loading: loadingInsert}] = useMutation(INSERT_CLIENT);
+
+    const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
+        variables: {
+            input: {
+                idMunicipio: parseInt(municipio),
+                idColonia: parseInt(colonia)
+            }
+        }
+    });
+    
+    const handleSubmit = async (e) => {
+
+        e.preventDefault();
+
+        if(!name || !lastNameP || !lastNameM || !phone || phone.length < 10 || (municipio === 0 || municipio === "0") || (colonia === 0 || colonia === "0") || !street || !number || !image || (distinguido === 0 || distinguido === "0") || !description){
+            
+            validateInput(name, setErrorName);
+            validateInput(lastNameP, setErrorLastNameP)
+            validateInput(lastNameM, setErrorLastNameM)
+            validatePhone(phone, setErrorPhone)
+            validateInput(municipio, setErrorMunicipio)
+            validateInput(colonia, setErrorColonia)
+            validateInput(street, setErrorStreet)
+            validateInput(number, setErrorNumber)
+            validateInput(image, setErrorFile)
+            validateInput(distinguido, setErrorDistinguido)
+            validateInput(description, setErrorDescription)
+            
+            return;
+        }
+
+        try {
+            const resp = await insertClient({
+                variables: {
+                    input: {
+                        aMaterno: lastNameM,
+                        aPaterno: lastNameP,
+                        calle: street,
+                        celular: phone,
+                        colonia: parseInt(colonia),
+                        descripcion: description,
+                        distinguido: parseInt(distinguido),
+                        img_domicilio: image,
+                        municipio: parseInt(municipio),
+                        nombre: name,
+                        numero_ext: number 
+                    }
+                }
+            })
+     
+            if(resp.data.insertClient.length === 1 && resp.data.insertClient[0].municipio_n === "nombre"){
+                Swal.fire({
+                    title: "¡Cliente agregado con éxito!",
+                    text: "Serás redirigido a la lista de clientes.",
+                    icon: "success",
+                    confirmButtonColor: "#1e8449",
+                    confirmButtonText: "Aceptar"
+                });
+            }else {
+                setIsModalOpen(true);
+                
+                setMatchesClients(resp.data.insertClient);
+
+                Swal.fire({
+                    title: "¡Se han encontrado coincidencias!",
+                    text: "",
+                    icon: "warning",
+                    confirmButtonColor: "#1e8449",
+                    confirmButtonText: "Aceptar"
+                });
+                
+                console.log("Se encontraron coincidencias.");
+            }
+
+
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
-    if(loadingColonias || loadingMunicipios){
+    if(loadingColonias || loadingMunicipios || loadingInsert || loadingClients){
         return <p className="text-6xl text-black">Cargando...</p>
     }
 
     if( errorColonias || errorMunicipios) {
-        return <p className="text-6xl text-black">{errorClients.message}.</p>
+        return <p className="text-6xl text-black">  {(errorColonias || errorMunicipios).message}</p>
     }
 
     const uploadImage = async (e) => {           
@@ -76,196 +204,348 @@ const NewClientForm = () => {
                 body: data
             });
 
-            const file = await response.json();     
+            const file = await response.json();
+            setErrorFile(false);     
             setImage(file.secure_url);              
         } catch (error) {
             console.error('Error uploading image:', error);
-            setLoading(false);
         }
 
     }
 
+    const validateInput = (value, setError) => {
+        if( !value || value === 0 || value === "0") {
+            setError(true);
+        }else{
+            setError(false);
+        }
+    }
+
+    const validatePhone = (value, setError) => {
+        if( !value) {
+            setError(true);
+            setErrorPhoneT("Campo obligatorio.");
+            return;
+        }if( value.length < 10) {
+            setError(true);
+            setErrorPhoneT("Número inválido.")
+            return;
+        }
+        else{
+            setError(false);
+        }
+    }
+
     return (
-        <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full">
-            <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Registro de Cliente</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre(s)
-                        </label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Nombre(s)"
-                            required
-                        />
-                    </div>   
-                    <div>
-                        <label htmlFor="dadLastName" className="block text-sm font-medium text-gray-700 mb-2">
-                            Apellido Paterno
-                        </label>
-                        <input
-                            type="text"
-                            id="dadLastName"
-                            name="dadLastName"
-                            value={lastNameP}
-                            onChange={(e) => setLastNameP(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Apellido Paterno"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="momLastName" className="block text-sm font-medium text-gray-700 mb-2">
-                            Apellido Materno
-                        </label>
-                        <input
-                            type="text"
-                            id="momLastName"
-                            name="momLastName"
-                            value={lastNameM}
-                            onChange={(e) => setLastNameM(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Apellido Materno"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                            Teléfono
-                        </label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            minLength={10}
-                            maxLength={10}
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Teléfono"
-                            required
-                        />
-                    </div>
-                    <div className="relative">
-                        <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
-                            Municipio
-                        </label>
-                        <select
-                            value={municipio}
-                            onChange={(e) => setMunicipio(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                        >
-                            {dataMunicipios.getMunicipios.map((municipio) => (
-                                <option key={municipio.idMunicipio} value={municipio.idMunicipio}>
-                                    {municipio.nombre === "Todos los municipios" ? "Seleccione un municipio" : municipio.nombre}
-                                </option>
+        <>
+            {!isModalOpen ? 
+                <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full">
+                    <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Registro de Cliente</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombre(s)
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={name}
+                                        onBlur={()=>{validateInput(name, setErrorName)}}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Nombre(s)"
+                                    />
+                                    {errorName ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>   
+                            <div>
+                                <label htmlFor="dadLastName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Apellido Paterno
+                                </label>
+                                <div className="flex flex-col">    
+                                    <input
+                                        type="text"
+                                        id="dadLastName"
+                                        name="dadLastName"
+                                        value={lastNameP}
+                                        onBlur={ () => {validateInput(lastNameP, setErrorLastNameP)} }
+                                        onChange={(e) => setLastNameP(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Apellido Paterno"
+                                    />
+                                    {errorLastNameP ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="momLastName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Apellido Materno
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="text"
+                                        id="momLastName"
+                                        name="momLastName"
+                                        value={lastNameM}
+                                        onBlur={ () => { validateInput(lastNameM, setErrorLastNameM) } }
+                                        onChange={(e) => setLastNameM(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Apellido Materno"
+                                    />
+                                    {errorLastNameM ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Teléfono
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        name="phone"
+                                        maxLength={10}
+                                        value={phone}
+                                        onBlur={ () => { validatePhone(phone, setErrorPhone) } }
+                                        onChange={(e) => {
+                                            const onlyNums = e.target.value.replace(/\D/g, "");
+                                            setPhone(onlyNums);
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Teléfono"
+                                    />
+                                    {errorPhone ? <span className="text-red-700 text-sm mt-2">{errorPhoneT}</span> : null}
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Municipio
+                                </label>
+                                <div className="flex flex-col">
+                                    <select
+                                        value={municipio}
+                                        onBlur={()=>{validateInput(municipio, setErrorMunicipio)}}
+                                        onChange={(e) => setMunicipio(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    >
+                                        {dataMunicipios.getMunicipios.map((municipio) => (
+                                            <option key={municipio.idMunicipio} value={municipio.idMunicipio}>
+                                                {municipio.nombre === "Todos los municipios" ? "Seleccione un municipio" : municipio.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errorMunicipio ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <label htmlFor="colonia" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Colonia
+                                </label>
+                                <div className="flex flex-col">
+                                    <select
+                                        value={colonia}
+                                        onChange={(e) => setColonia(e.target.value)}
+                                        onBlur={()=>{validateInput(colonia, setErrorColonia)}}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    >
+                                        {dataColonias.getColonias.map((colonia) => (
+                                            <option key={colonia.idColonia} value={colonia.idColonia}>
+                                                {colonia.nombre === "Todas las colonias" ? "Seleccione una colonia" : colonia.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errorColonia ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Calle
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="text"
+                                        id="street"
+                                        name="street"
+                                        value={street}
+                                        onBlur={()=>{validateInput(street, setErrorStreet)}}
+                                        onChange={(e) => setStreet(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Calle"
+                                    />
+                                    {errorStreet ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Número Exterior
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="text"
+                                        id="number"
+                                        name="number"
+                                        value={number}
+                                        onBlur={()=>{validateInput(number, setErrorNumber)}}
+                                        onChange={(e) => setNumber(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                        placeholder="Número exterior"
+                                    />
+                                    {errorNumber ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Archivo
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="file"
+                                        id="file"
+                                        name="file"
+                                        onBlur={()=>{validateInput(image, setErrorFile)}}
+                                        onChange={uploadImage}
+                                        className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
+                                    />
+                                    {errorFile ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Distinguido
+                                </label>
+                                <div className="flex flex-col">
+                                    <select
+                                        value={distinguido}
+                                        onBlur={()=>{validateInput(distinguido, setErrorDistinguido)}}
+                                        onChange={(e) => setDistinguido(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    >
+                                        <option value={0}>Seleccione una opción</option>
+                                        <option value={1}>Sí</option>
+                                        <option value={2}>No</option>
+                                    </select>
+                                    {errorDistinguido ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                                Descripción
+                            </label>
+                            <div className="flex flex-col">
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    value={description}
+                                    onBlur={()=>{validateInput(description, setErrorDescription)}}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows={4}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    placeholder="Ingrese una descripción..."
+                                />
+                                {errorDescription ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                            </div>
+                        </div>
+                        <div>
+                            <button
+                                //onClick={handleSubmit}
+                                type="submit"
+                                className="w-full cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
+                            >
+                                Guardar cliente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            : 
+                <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full">
+                    <h1 className="text-3xl font-bold text-center mb-10">Lista de coincidencias</h1>
+                    <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
+                                            Nombre
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
+                                            Calle
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
+                                            Colonia
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
+                                            Municipio
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {matchesClients.map((client) => (
+                                        <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-600">{client.municipio_n}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-600">{client.colonia_n}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="md:hidden">
+                            {matchesClients.map((client) => (
+                                <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-2 text-sm">
+                                            <div>
+                                                <span className="font-medium text-gray-600">Municipio:</span>
+                                                <span className="ml-2 text-gray-800">{client.municipio_n}</span>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-gray-600">Colonia:</span>
+                                                <span className="ml-2 text-gray-800">{client.colonia_n}</span>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-gray-600">Calle:</span>
+                                                <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
-                        </select>
+                        </div>
                     </div>
-                    <div className="relative">
-                        <label htmlFor="colonia" className="block text-sm font-medium text-gray-700 mb-2">
-                            Colonia
-                        </label>
-                        <select
-                            value={colonia}
-                            onChange={(e) => setColonia(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                    <div className="flex flex-row w-9/10 justify-center mt-10">
+                        <button
+                            onClick={() => {setIsModalOpen(false)}}
+                            type="submit"
+                            className="mr-3 w-1/5 cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
                         >
-                            {dataColonias.getColonias.map((colonia) => (
-                                <option key={colonia.idColonia} value={colonia.idColonia}>
-                                    {colonia.nombre === "Todas las colonias" ? "Seleccione una colonia" : colonia.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
-                            Calle
-                        </label>
-                        <input
-                            type="text"
-                            id="street"
-                            name="street"
-                            value={street}
-                            onChange={(e) => setStreet(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Calle"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                            Número Exterior
-                        </label>
-                        <input
-                            type="text"
-                            id="number"
-                            name="number"
-                            value={number}
-                            onChange={(e) => setNumber(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                            placeholder="Número exterior"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
-                            Archivo
-                        </label>
-                        <input
-                            type="file"
-                            id="file"
-                            name="file"
-                            onChange={uploadImage}
-                            className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
-                        />
-                    </div>
-                    <div className="relative">
-                        <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
-                            Distinguido
-                        </label>
-                        <select
-                            value={distinguido}
-                            onChange={(e) => setDistinguido(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                            Regresar
+                        </button>
+                         <button
+                            onClick={() => {setIsModalOpen(false)}}
+                            type="submit"
+                            className="ml-3 w-1/5 cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
                         >
-                            <option value="0">Seleccione una opción</option>
-                            <option value="1">Sí</option>
-                            <option value="2">No</option>
-                        </select>
+                            Continuar
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                        Descripción
-                    </label>
-                    <textarea
-                        id="description"
-                        name="description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                        placeholder="Ingrese una descripción..."
-                    />
-                </div>
-                <div>
-                    <button
-                        onClick={handleSubmit}
-                        type="submit"
-                        className="w-full cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
-                    >
-                        Guardar cliente
-                    </button>
-                </div>
-            </form>
-        </div>
+            }
+        </>
     )
 }
 
