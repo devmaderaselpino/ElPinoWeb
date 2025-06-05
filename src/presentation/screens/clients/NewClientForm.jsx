@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { useQuery, gql, useMutation } from '@apollo/client';
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
+import { Trash } from "lucide-react";
+import Loading from "../../components/shared/Loading";
+import ErrorPage from "../../components/shared/ErrorPage";
 
 const COLONIAS_LIST = gql`
     query GetColonias($filter: Int) {
@@ -41,28 +45,15 @@ const INSERT_CLIENT = gql`
     }
 `;
 
-const CLIENTS_LIST = gql`
-    query GetClients($input: ClientsInput) {
-        getClients(input: $input) {
-            idCliente
-            nombre
-            aPaterno
-            aMaterno
-            municipio
-            municipio_n
-            colonia
-            colonia_n
-            calle
-            numero_ext
-            celular
-            distinguido
-            img_domicilio
-            descripcion
-        }
+const INSERT_VALIDATED_CLIENT = gql`
+    mutation InsertValidatedClient($input: ClientInput) {
+        insertValidatedClient(input: $input)
     }
 `;
 
 const NewClientForm = () => {
+
+    const navigate = useNavigate();
     
     const [name, setName] = useState("");
     const [lastNameP, setLastNameP] = useState("");
@@ -96,22 +87,15 @@ const NewClientForm = () => {
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(municipio)
-        }
+        }, fetchPolicy: "network-only"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST);
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
 
     const [insertClient, { loading: loadingInsert}] = useMutation(INSERT_CLIENT);
 
-    const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
-        variables: {
-            input: {
-                idMunicipio: parseInt(municipio),
-                idColonia: parseInt(colonia)
-            }
-        }
-    });
-    
+    const [insertValidatedClient, { loading: loadingValidatedInsert}] = useMutation(INSERT_VALIDATED_CLIENT);
+
     const handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -160,6 +144,9 @@ const NewClientForm = () => {
                     confirmButtonColor: "#1e8449",
                     confirmButtonText: "Aceptar"
                 });
+                setTimeout(() => {
+                    navigate(`/ListaClientes`)
+                }, 2000);
             }else {
                 setIsModalOpen(true);
                 
@@ -183,12 +170,65 @@ const NewClientForm = () => {
 
     }
 
-    if(loadingColonias || loadingMunicipios || loadingInsert || loadingClients){
-        return <p className="text-6xl text-black">Cargando...</p>
+    const handleTwoSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const resp = await insertValidatedClient({
+                variables: {
+                    input: {
+                        aMaterno: lastNameM,
+                        aPaterno: lastNameP,
+                        calle: street,
+                        celular: phone,
+                        colonia: parseInt(colonia),
+                        descripcion: description,
+                        distinguido: parseInt(distinguido),
+                        img_domicilio: image,
+                        municipio: parseInt(municipio),
+                        nombre: name,
+                        numero_ext: number 
+                    }
+                }
+            })
+    
+     
+            if(resp.data.insertValidatedClient === "Cliente insertado"){
+                Swal.fire({
+                    title: "¡Cliente agregado con éxito!",
+                    text: "Serás redirigido a la lista de clientes.",
+                    icon: "success",
+                    confirmButtonColor: "#1e8449",
+                    confirmButtonText: "Aceptar"
+                });
+                setTimeout(() => {
+                    navigate(`/ListaClientes`)
+                }, 2000);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: "¡Ha ocurrido un error agregando al cliente!",
+                text: "Inténtelo más tarde.",
+                icon: "error",
+                confirmButtonColor: "#922b21",
+                confirmButtonText: "Aceptar"
+            });
+            setTimeout(() => {
+                setIsModalOpen(false);
+            }, 2000);
+        }
+    }
+
+    if(loadingColonias || loadingMunicipios || loadingInsert || loadingValidatedInsert){
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
     }
 
     if( errorColonias || errorMunicipios) {
-        return <p className="text-6xl text-black">  {(errorColonias || errorMunicipios).message}</p>
+        return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
     const uploadImage = async (e) => {           
@@ -399,17 +439,31 @@ const NewClientForm = () => {
                                 <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
                                     Archivo
                                 </label>
-                                <div className="flex flex-col">
-                                    <input
-                                        type="file"
-                                        id="file"
-                                        name="file"
-                                        onBlur={()=>{validateInput(image, setErrorFile)}}
-                                        onChange={uploadImage}
-                                        className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
-                                    />
-                                    {errorFile ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                                </div>
+                                {!image ?  
+                                    <div className="flex flex-col">
+                                        <input
+                                            type="file"
+                                            id="file"
+                                            name="file"
+                                            onBlur={()=>{validateInput(image, setErrorFile)}}
+                                            onChange={uploadImage}
+                                            className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
+                                        />
+                                        {errorFile ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
+                                    </div>
+                                    :  
+                                    <div className="flex flex-row w-full justify-between">
+                                        <button
+                                            onClick={()=>{setImage("")}}
+                                            className="bg-green-800 w-1/6 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 flex justify-center items-center"
+                                        >
+                                            <Trash className="h-4 w-4 text-white" />
+                                        </button> 
+                                        <div className="bg-green-800 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 flex justify-center">
+                                            <span className="text-white w-full text-center">Imagen agregada.</span>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                             <div className="relative">
                                 <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
@@ -536,7 +590,7 @@ const NewClientForm = () => {
                             Regresar
                         </button>
                          <button
-                            onClick={() => {setIsModalOpen(false)}}
+                            onClick={handleTwoSubmit}
                             type="submit"
                             className="ml-3 w-1/5 cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
                         >

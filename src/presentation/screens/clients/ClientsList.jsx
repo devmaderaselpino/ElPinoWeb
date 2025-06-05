@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useQuery, gql } from '@apollo/client';
 import { useNavigate } from "react-router-dom";
 import { UserRoundPlus, Filter } from 'lucide-react';
+import Loading from "../../components/shared/Loading";
+import ErrorPage from "../../components/shared/ErrorPage";
 
 const CLIENTS_LIST = gql`
     query GetClients($input: ClientsInput) {
@@ -55,28 +57,34 @@ const ClientsList = () => {
                 idMunicipio: parseInt(municipio),
                 idColonia: parseInt(colonia)
             }
-        }
+        }, fetchPolicy: "network-only"
     });
+    
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(municipio)
-        }
+        }, fetchPolicy: "network-only"
     });
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST);
+    
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
     
     if(loadingClients || loadingColonias || loadingMunicipios){
-        return <p className="text-6xl text-black">Cargando...</p>
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
     }
 
     if(errorClients || errorColonias || errorMunicipios) {
-        return <p className="text-6xl text-black">{errorClients.message}.</p>
+        return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
     const clearFilters = () => {
         setColonia(0);
         setMunicipio(0);
     }
-    
     
     return(
         <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col">

@@ -1,5 +1,7 @@
 import React, {useState} from "react";
 import { useQuery, gql } from '@apollo/client';
+import Loading from "../../components/shared/Loading";
+import ErrorPage from "../../components/shared/ErrorPage";
 
 const PENDING_INVENTORYR = gql`
     query Query {
@@ -16,15 +18,20 @@ const PENDING_INVENTORYE = gql`
 
 const Home = () => {
     
-    const { loading: loadingIR, error: errorIR, data: dataIR } = useQuery(PENDING_INVENTORYR);
-    const { loading: loadingIE, error: errorIE, data: dataIE } = useQuery(PENDING_INVENTORYE);
+    const { loading: loadingIR, error: errorIR, data: dataIR } = useQuery(PENDING_INVENTORYR, {fetchPolicy: "network-only"});
+    const { loading: loadingIE, error: errorIE, data: dataIE } = useQuery(PENDING_INVENTORYE, {fetchPolicy: "network-only"});
     
     if(loadingIR || loadingIE){
-        return <p className="text-6xl text-black">Cargando...</p>
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
     }
 
     if(errorIE || errorIR) {
-        return <p className="text-6xl text-black">Error: {errorIE.message ? errorIE.message : errorIR.message }</p>
+        return <ErrorPage message={"Inténtelo más tarde."} showHomeButton={false}/>
     }
 
     return(

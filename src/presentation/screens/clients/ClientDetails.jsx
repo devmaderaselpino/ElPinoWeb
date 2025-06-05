@@ -4,6 +4,8 @@ import { useQuery, gql } from '@apollo/client';
 import { Award, Download, Edit, CreditCard, Phone, User, MapPin, Calendar    } from 'lucide-react';
 import PurchaseHistory from "../../components/PurchaseHistory";
 import archivo from '../../../assets/archivo.pdf';
+import Loading from "../../components/shared/Loading";
+import ErrorPage from "../../components/shared/ErrorPage";
 
 const CLIENT_INFO = gql`
     query GetClient($idCliente: Int) {
@@ -57,11 +59,16 @@ const ClientDetails = () => {
     });
 
     if(loadingClient){
-        return <p className="text-6xl text-black">Cargando...</p>
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
     }
 
     if(errorClient) {
-        return <p className="text-6xl text-black">Error: {errorClient.message}</p>
+        return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
     return(
