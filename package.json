@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
+    "@formkit/tempo": "^0.1.2",
     "@tailwindcss/vite": "^4.1.7",
     "flowbite": "^3.1.2",
     "graphql": "^16.11.0",

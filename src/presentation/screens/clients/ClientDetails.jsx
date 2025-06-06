@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, gql } from '@apollo/client';
 import { Award, Download, Edit, CreditCard, Phone, User, MapPin, Calendar    } from 'lucide-react';
-import PurchaseHistory from "../../components/PurchaseHistory";
+import PurchaseHistory from "../../components/clients/PurchaseHistory";
 import archivo from '../../../assets/archivo.pdf';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
+import { useNavigate } from "react-router-dom";
+import { format } from "@formkit/tempo";
 
 const CLIENT_INFO = gql`
     query GetClient($idCliente: Int) {
@@ -24,41 +26,85 @@ const CLIENT_INFO = gql`
             distinguido
             img_domicilio
             descripcion
+            fecha_reg
+            status
+        }
+    }
+`;
+
+const LAST_SALE = gql`
+    query Query($idCliente: Int) {
+        getLastSaleByClient(idCliente: $idCliente)
+    }
+`;
+
+const SALES_LIST = gql`
+    query GetSalesByClient($input: SalesInput) {
+        getSalesByClient(input: $input) {
+            idVenta
+            total
+            subtotal
+            interes
+            fecha
+            usuario_reg
+            idCliente
+            status
+            getProducts {
+                id
+                descripcion
+                cantidad
+                precio
+                img_producto
+            }
+        }
+    }
+`;
+
+const CLIENT_STATS = gql`
+    query GetClientStats($idCliente: Int) {
+        getClientStats(idCliente: $idCliente) {
+            total_comprado
+            total_compras
         }
     }
 `;
 
 const ClientDetails = () => {
-    
-    const customer = {
-        id: 'CUST-10285',
-        firstName: 'Emma',
-        lastName: 'Johnson',
-        email: 'emma.johnson@example.com',
-        phone: '+1 (555) 123-4567',
-        address: {
-            street: '123 Main Street, Apt 4B',
-            city: 'San Francisco',
-            state: 'CA',
-            zip: '94105',
-            country: 'United States'
-        },
-        status: 'Activo',
-        membershipLevel: 'Premium',
-        joinDate: 'Enero 15, 2022',
-        lastPurchase: 'Enero 28, 2023',
-        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    };
 
+    const navigate = useNavigate();
+    
     const {idCliente} = useParams();
+
+    const [statusFilter, setStatusFilter] = useState(0);
 
     const { loading: loadingClient, error: errorClient, data: dataClient } = useQuery(CLIENT_INFO, {
         variables: {
             idCliente: parseInt(idCliente)
-        }
+        }, fetchPolicy:"network-only"
     });
 
-    if(loadingClient){
+    const { loading: loadingSale, error: errorSale, data: dataSale } = useQuery(LAST_SALE, {
+        variables: {
+            idCliente: parseInt(idCliente)
+        }, fetchPolicy:"network-only"
+    });
+
+    const { loading: loadingSales, error: errorSales, data: dataSales } = useQuery(SALES_LIST, {
+        variables: {
+            input: {
+                idCliente: parseInt(idCliente),
+                status: statusFilter
+            }
+        }, fetchPolicy:"network-only"
+    });
+
+    const { loading: loadingStats, error: errorStats, data: dataStats } = useQuery(CLIENT_STATS, {
+        variables: {
+            idCliente: parseInt(idCliente)
+        }, fetchPolicy:"network-only"
+    });
+
+    if(loadingClient || loadingSale || loadingSales || loadingStats){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -67,9 +113,12 @@ const ClientDetails = () => {
         );
     }
 
-    if(errorClient) {
+    if(errorClient || errorSale || errorSales || errorStats) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
+
+    console.log(dataStats);
+    
 
     return(
         <div className="md:pl-64 lg:pl-64">
@@ -102,7 +151,7 @@ const ClientDetails = () => {
                             <div className="flex items-start">
                                 <MapPin size={18} className="text-green-800 mr-3 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <p className="text-gray-700">{dataClient.getClient.municipio_n} {dataClient.getClient.colonia_n}, {dataClient.getClient.calle} #{dataClient.getClient.numero_ext}</p>
+                                    <p className="text-gray-700">{dataClient.getClient.municipio_n}, {dataClient.getClient.colonia_n}, {dataClient.getClient.calle} #{dataClient.getClient.numero_ext}</p>
                                     <span className="text-gray-700 text-sm">Descripción: {dataClient.getClient.descripcion}</span>
                                 </div>
                             </div>
@@ -117,11 +166,11 @@ const ClientDetails = () => {
                                     <p className="text-xs text-gray-500">Estatus</p>
                                     <p className="text-gray-700 font-medium">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            customer.status === 'Activo' 
+                                            dataClient.getClient.status === 1 
                                             ? 'bg-green-100 text-green-800' 
                                             : 'bg-gray-100 text-gray-800'
                                         }`}>
-                                            {customer.status}
+                                            {dataClient.getClient.status === 1 ? "Activo" : "Inactivo"}
                                         </span>
                                     </p>
                                 </div>
@@ -137,7 +186,7 @@ const ClientDetails = () => {
                                 <Calendar size={18} className="text-green-800 mr-2 flex-shrink-0" />
                                 <div>
                                     <p className="text-xs text-gray-500">Fecha de registro</p>
-                                    <p className="text-gray-700">{customer.joinDate}</p>
+                                    <p className="text-gray-700">{format(new Date(parseInt(dataClient.getClient.fecha_reg)), { date: 'long' })}</p>
                                 </div>
                             </div>
                             
@@ -145,14 +194,14 @@ const ClientDetails = () => {
                                 <CreditCard size={18} className="text-green-800 mr-2 flex-shrink-0" />
                                 <div>
                                     <p className="text-xs text-gray-500">Última compra</p>
-                                    <p className="text-gray-700">{customer.lastPurchase}</p>
+                                    <p className="text-gray-700">{dataSale.getLastSaleByClient ? format(new Date(parseInt(dataSale.getLastSaleByClient)), { date: 'long' }) : "N/A"}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t">
-                    <button className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
+                    <button onClick={ ()=> { navigate(`/EditarCliente/${dataClient.getClient.idCliente}`)} } className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
                         <Edit size={18} />
                     </button>
                     <a href={archivo} download target="_blank">
@@ -162,7 +211,7 @@ const ClientDetails = () => {
                     </a>
                 </div>
             </div>
-            <PurchaseHistory></PurchaseHistory>
+            <PurchaseHistory purchases={dataSales.getSalesByClient} stats={dataStats.getClientStats} status={statusFilter} setStatus={setStatusFilter}/>
         </div>
     );
 }

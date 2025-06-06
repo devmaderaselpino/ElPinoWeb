@@ -1,14 +1,13 @@
 
-import { Package, DollarSign, Calendar, TrendingUp } from 'lucide-react';
+import { Package, DollarSign } from 'lucide-react';
+import formatPrice from '../../../functions/FormatPrice';
 
 const PurchaseStats = ({ purchases }) => {
-    const totalSpent = purchases.reduce((sum, purchase) => sum + purchase.total, 0);
-    const totalOrders = purchases.length;
-
+    
     const stats = [
         {
             title: 'Total de compras',
-            value: totalOrders.toString(),
+            value:purchases.total_compras,
             icon: Package,
             color: 'from-blue-500 to-blue-600',
             bgColor: 'bg-blue-50',
@@ -16,7 +15,7 @@ const PurchaseStats = ({ purchases }) => {
         },
         {
             title: 'Total gastado',
-            value: `$${totalSpent.toFixed(2)}`,
+            value: formatPrice(purchases.total_comprado),
             icon: DollarSign,
             color: 'from-green-500 to-green-600',
             bgColor: 'bg-green-50',
