@@ -1,13 +1,25 @@
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useParams } from "react-router-dom";
+import { useQuery, gql, useMutation } from '@apollo/client';
 import Loading from "../../components/shared/Loading";
-import { useState } from "react";
+import ErrorPage from "../../components/shared/ErrorPage";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import ErrorPage from '../../components/shared/ErrorPage';
 
-const INSERT_DISTRICT = gql`
-    mutation InsertDistrict($input: ColoniaInput) {
-        insertDistrict(input: $input)
+const DISTRICT_INFO = gql`
+    query GetColonia($idColonia: Int) {
+        getColonia(idColonia: $idColonia) {
+            idColonia
+            idMunicipio
+            nombre
+            cp
+    }
+}
+`;
+
+const UPDATE_DISTRICT = gql`
+    mutation Mutation($input: ColoniaInput) {
+        updateDistrict(input: $input)
     }
 `;
 
@@ -20,7 +32,9 @@ const MUNICIPIOS_LIST = gql`
     }
 `;
 
-const NewDistrictForm = () => {
+const EditDistrict = () => {
+
+    const {idColonia} = useParams();
 
     const navigate = useNavigate();
 
@@ -31,12 +45,27 @@ const NewDistrictForm = () => {
     const [errorDistrict, setErrorDistrict] = useState(false);
     const [errorMunicipio, setErrorMunicipio] = useState(false);
     const [errorCP, setErrorCP] = useState(false);
-    
-    const [insertDistrict, { loading: loadingUpdate}] = useMutation(INSERT_DISTRICT);
-   
+
+    const { loading, error, data } = useQuery(DISTRICT_INFO, {
+        variables: {
+            idColonia: parseInt(idColonia)
+        }, 
+        fetchPolicy: "network-only"
+    });
+
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
 
-    if(loadingUpdate || loadingMunicipios){
+    const [updateDistrict, { loading: loadingUpdate}] = useMutation(UPDATE_DISTRICT);
+
+    useEffect(()=> {
+        if(data){
+            setDistrict(data.getColonia.nombre);
+            setMunicipio(data.getColonia.idMunicipio)
+            setCp(data.getColonia.cp)
+        }
+    },[data])
+
+    if(loading || loadingUpdate || loadingMunicipios){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -45,43 +74,38 @@ const NewDistrictForm = () => {
         );
     }
 
-     if(errorMunicipios) {
+    if(error || errorMunicipios) {
         return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
-    const validateInput = (value, setError) => {
-        if( !value || value === "0" || value === 0) {
-            setError(true);
-        }else{
-            setError(false);
-        }
-    }
-
     const handleSubmit = async (e) => {
+
         validateInput(municipio, setErrorMunicipio);
         validateInput(district, setErrorDistrict);
         validateInput(cp, setErrorCP);
+        
         e.preventDefault();
 
-
-        if(errorDistrict || !district || errorMunicipio || municipio === "0" || municipio === 0 || errorCP || !cp){
+       if(errorDistrict || !district || errorMunicipio || municipio === "0" || municipio === 0 || errorCP || !cp){
             return;
         }
         
         try {
-            const resp = await insertDistrict({
+            const resp = await updateDistrict({
                 variables: {
-                    input : {
-                        idMunicipio: parseInt(municipio),
+                    input: {
+                        idColonia: parseInt(idColonia),
                         nombre: district,
+                        idMunicipio: parseInt(municipio),
                         cp: parseInt(cp)
                     }
                 }
             });
-            
-            if(resp.data.insertDistrict === "Colonia insertada"){
+
+            if(resp.data.updateDistrict === "Colonia actualizada"){
+
                 Swal.fire({
-                    title: "Colonia agregada con éxito!",
+                    title: "¡Colonia actualizada con éxito!",
                     text: "Serás redirigido a la lista de ubicaciones.",
                     icon: "success",
                     confirmButtonText: "Aceptar",
@@ -91,16 +115,25 @@ const NewDistrictForm = () => {
                         navigate(`/Ubicaciones`)
                     }
                 });
+
             }
 
         } catch (error) {
             Swal.fire({
-                title: "¡Ha ocurrido un error agregando la colonia!",
+                title: "¡Ha ocurrido un error actualizando la colonia!",
                 text: "Inténtelo más tarde.",
                 icon: "error",
                 confirmButtonText: "Aceptar",
                 confirmButtonColor: "#922b21",
             }); 
+        }
+    }
+    
+    const validateInput = (value, setError) => {
+        if( !value || value === "0" || value === 0) {
+            setError(true);
+        }else{
+            setError(false);
         }
     }
 
@@ -182,4 +215,4 @@ const NewDistrictForm = () => {
     );
 }
 
-export default NewDistrictForm;
+export default EditDistrict;

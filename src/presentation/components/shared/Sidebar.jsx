@@ -10,7 +10,7 @@ const navigation = [
     { name: "Clientes", href: "/ListaClientes", icon: Users },
     { name: "Historial Abonos", href: "#", icon: HandCoins },
     { name: "Historial Ventas", href: "#", icon: DollarSignIcon },
-    { name: "Ubicaciones", href: "#", icon: MapPinCheck },
+    { name: "Ubicaciones", href: "/Ubicaciones", icon: MapPinCheck },
     { name: "Enrutado", href: "/Enrutado", icon: MapIcon },
 ];
 

@@ -137,18 +137,20 @@ const NewClientForm = () => {
             })
      
             if(resp.data.insertClient.length === 1 && resp.data.insertClient[0].municipio_n === "nombre"){
+
                 Swal.fire({
                     title: "¡Cliente agregado con éxito!",
                     text: "Serás redirigido a la lista de clientes.",
                     icon: "success",
+                    confirmButtonText: "Aceptar",
                     confirmButtonColor: "#1e8449",
-                    confirmButtonText: "Aceptar"
-                });
-                setTimeout(() => {
-                    navigate(`/ListaClientes`)
-                }, 2000);
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/ListaClientes`)
+                    }
+                }); 
+
             }else {
-                setIsModalOpen(true);
                 
                 setMatchesClients(resp.data.insertClient);
 
@@ -156,16 +158,29 @@ const NewClientForm = () => {
                     title: "¡Se han encontrado coincidencias!",
                     text: "",
                     icon: "warning",
+                    confirmButtonText: "Aceptar",
                     confirmButtonColor: "#1e8449",
-                    confirmButtonText: "Aceptar"
-                });
-                
-                console.log("Se encontraron coincidencias.");
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        setIsModalOpen(true);
+                    }
+                }); 
+             
             }
 
-
         } catch (error) {
-            console.log(error);
+
+            Swal.fire({
+                title: "¡Ha ocurrido un error agregando al cliente!",
+                text: "Inténtelo más tarde.",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#922b21",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    setIsModalOpen(false);
+                }
+            }); 
         }
 
     }
@@ -193,28 +208,31 @@ const NewClientForm = () => {
     
      
             if(resp.data.insertValidatedClient === "Cliente insertado"){
+
                 Swal.fire({
                     title: "¡Cliente agregado con éxito!",
                     text: "Serás redirigido a la lista de clientes.",
                     icon: "success",
+                    confirmButtonText: "Aceptar",
                     confirmButtonColor: "#1e8449",
-                    confirmButtonText: "Aceptar"
-                });
-                setTimeout(() => {
-                    navigate(`/ListaClientes`)
-                }, 2000);
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/ListaClientes`)
+                    }
+                }); 
             }
         } catch (error) {
             Swal.fire({
                 title: "¡Ha ocurrido un error agregando al cliente!",
                 text: "Inténtelo más tarde.",
                 icon: "error",
+                confirmButtonText: "Aceptar",
                 confirmButtonColor: "#922b21",
-                confirmButtonText: "Aceptar"
-            });
-            setTimeout(() => {
-                setIsModalOpen(false);
-            }, 2000);
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    setIsModalOpen(false);
+                }
+            }); 
         }
     }
 

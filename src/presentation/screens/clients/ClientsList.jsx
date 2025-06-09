@@ -113,7 +113,7 @@ const ClientsList = () => {
                         <select
                             value={municipio}
                             onChange={(e) => setMunicipio(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
                         >
                             {dataMunicipios.getMunicipios.map((municipio) => (
                                 <option key={municipio.idMunicipio} value={municipio.idMunicipio}>
@@ -129,7 +129,7 @@ const ClientsList = () => {
                         <select
                             value={colonia}
                             onChange={(e) => setColonia(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
                         >
                             {dataColonias.getColonias.map((colonia) => (
                                 <option key={colonia.idColonia} value={colonia.idColonia}>

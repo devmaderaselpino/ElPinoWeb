@@ -159,22 +159,29 @@ const EditClient = () => {
                 }
             })
      
-           if(resp.data.updateClient === "Cliente actualizado"){
+            if(resp.data.updateClient === "Cliente actualizado"){
                 Swal.fire({
                     title: "¡Cliente actualizado con éxito!",
                     text: "Serás redirigido a la lista de clientes.",
                     icon: "success",
+                    confirmButtonText: "Aceptar",
                     confirmButtonColor: "#1e8449",
-                    confirmButtonText: "Aceptar"
-                });
-                setTimeout(() => {
-                    navigate(`/ListaClientes`)
-                }, 2000);
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/ListaClientes`)
+                    }
+                }); 
             }
 
 
         } catch (error) {
-            console.log(error);
+            Swal.fire({
+                title: "¡Ha ocurrido un error actualizando el cliente!",
+                text: "Inténtelo más tarde.",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#922b21",
+            });
         }
 
     }
