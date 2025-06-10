@@ -1,5 +1,6 @@
 import React from 'react'
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
+import LoginForm from '../screens/auth/Login';
 import Home from "../screens/dashboard/Home";
 import NewClientForm from '../screens/clients/NewClientForm';
 import Sidebar from '../components/shared/Sidebar';
@@ -12,12 +13,19 @@ import NewCityForm from '../screens/locations/NewCityForm';
 import NewDistrictForm from '../screens/locations/NewDistrictForm';
 import EditCity from '../screens/locations/EditCity';
 import EditDistrict from '../screens/locations/EditDistrict';
+// import ProtectedRoutes from './guards/ProtectedRoutes';
 
 const MainNavigation = () => {
+
+    const location = useLocation();
+    const hideSidebarRoutes = ['/Login'];
+    const shouldHideSidebar = hideSidebarRoutes.includes(location.pathname);
+
     return(
         <>
-            <Sidebar />
+            {!shouldHideSidebar && <Sidebar />}
             <Routes>
+                <Route path="/Login" element={<LoginForm/>} />
                 <Route path="/" element={<Home/>} />
                 <Route path="/ListaClientes" element={<ClientsList/>} />
                 <Route path="/AgregarCliente" element={<NewClientForm/>} />

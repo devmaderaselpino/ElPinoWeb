@@ -19,7 +19,8 @@ export default function Sidebar() {
 
     return (
         <>
-            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none">
+        
+            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="fixed top-2 left-3 z-50 p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none lg:hidden">
                 <span className="sr-only">Open sidebar</span> {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
             

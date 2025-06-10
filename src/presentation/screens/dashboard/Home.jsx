@@ -1,7 +1,9 @@
-import React, {useState} from "react";
+import React, {useState, useContext, useEffect} from "react";
 import { useQuery, gql } from '@apollo/client';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
+import { AuthContext } from "../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const PENDING_INVENTORYR = gql`
     query Query {
@@ -17,9 +19,19 @@ const PENDING_INVENTORYE = gql`
 
 
 const Home = () => {
+
+    const navigate = useNavigate();
+
+    const {user} = useContext(AuthContext);
     
     const { loading: loadingIR, error: errorIR, data: dataIR } = useQuery(PENDING_INVENTORYR, {fetchPolicy: "network-only"});
     const { loading: loadingIE, error: errorIE, data: dataIE } = useQuery(PENDING_INVENTORYE, {fetchPolicy: "network-only"});
+
+    useEffect( () => {
+        if (!user) {
+            navigate("/Login")
+        }
+    },[])
     
     if(loadingIR || loadingIE){
         return (
@@ -33,6 +45,8 @@ const Home = () => {
     if(errorIE || errorIR) {
         return <ErrorPage message={"Inténtelo más tarde."} showHomeButton={false}/>
     }
+
+    
 
     return(
         <div className="bg-white md:pl-64 lg:pl-64">
