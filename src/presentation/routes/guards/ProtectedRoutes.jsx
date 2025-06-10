@@ -1,14 +1,13 @@
-// import { Outlet, Navigate } from "react-router-dom";
-// import { useAuth } from "../../../context/AuthContext";
+import { useContext } from "react";
+import { Outlet, Navigate } from "react-router-dom";
+import { AuthContext } from "../../../context/AuthContext";
 
-// const ProtectedRoutes = () => {
+const ProtectedRoutes = () => {
+
+    const { user } = useContext(AuthContext);
     
-//     const { user } = useAuth();
+    return user ? <Outlet /> : <Navigate to="/Login" replace/>
+};
 
-//     console.log(user);
-    
+export default ProtectedRoutes;
 
-//     return user ? <Outlet /> : <Navigate to="/Login" replace/>
-// };
-
-// export default ProtectedRoutes;

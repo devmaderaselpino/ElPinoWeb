@@ -13,7 +13,7 @@ import NewCityForm from '../screens/locations/NewCityForm';
 import NewDistrictForm from '../screens/locations/NewDistrictForm';
 import EditCity from '../screens/locations/EditCity';
 import EditDistrict from '../screens/locations/EditDistrict';
-// import ProtectedRoutes from './guards/ProtectedRoutes';
+import ProtectedRoutes from './guards/ProtectedRoutes';
 
 const MainNavigation = () => {
 
@@ -26,17 +26,19 @@ const MainNavigation = () => {
             {!shouldHideSidebar && <Sidebar />}
             <Routes>
                 <Route path="/Login" element={<LoginForm/>} />
-                <Route path="/" element={<Home/>} />
-                <Route path="/ListaClientes" element={<ClientsList/>} />
-                <Route path="/AgregarCliente" element={<NewClientForm/>} />
-                <Route path="/DetalleClientes/:idCliente" element={<ClientDetails/>} />
-                <Route path="/Enrutado" element={<Enrutado/>} />
-                <Route path="/EditarCliente/:idCliente" element={<EditClient/>} />
-                <Route path="/AgregarMunicipio" element={<NewCityForm/>} />
-                <Route path="/AgregarColonia" element={<NewDistrictForm/>} />
-                <Route path="/Ubicaciones" element={<LocationList/>} />
-                <Route path="/EditarCiudad/:idCiudad" element={<EditCity/>} />
-                <Route path="/EditarColonia/:idColonia" element={<EditDistrict/>} />
+                <Route element={<ProtectedRoutes />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/ListaClientes" element={<ClientsList />} />
+                    <Route path="/AgregarCliente" element={<NewClientForm />} />
+                    <Route path="/DetalleClientes/:idCliente" element={<ClientDetails />} />
+                    <Route path="/Enrutado" element={<Enrutado />} />
+                    <Route path="/EditarCliente/:idCliente" element={<EditClient />} />
+                    <Route path="/AgregarMunicipio" element={<NewCityForm />} />
+                    <Route path="/AgregarColonia" element={<NewDistrictForm />} />
+                    <Route path="/Ubicaciones" element={<LocationList />} />
+                    <Route path="/EditarCiudad/:idCiudad" element={<EditCity />} />
+                    <Route path="/EditarColonia/:idColonia" element={<EditDistrict />} />
+                </Route>
             </Routes>
         </>
     );

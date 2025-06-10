@@ -71,7 +71,7 @@ const LoginForm = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center  lg:pl-64 md:pl-64">
+        <div className="min-h-screen flex items-center justify-center">
             <div className="max-w-md w-full space-y-8 bg-white p-6 sm:p-10 rounded-xl shadow-md">
                 <div className="flex flex-col justify-center items-center">
                     <h2 className="mt-5 text-center text-3xl font-bold text-gray-900">Inicio de sesión</h2>

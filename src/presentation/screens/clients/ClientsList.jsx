@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, gql } from '@apollo/client';
 import { useNavigate } from "react-router-dom";
-import { UserRoundPlus, Filter } from 'lucide-react';
+import { UserRoundPlus, Filter, Search } from 'lucide-react';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 
@@ -50,6 +50,9 @@ const ClientsList = () => {
 
     const [colonia, setColonia] = useState(0);
     const [municipio, setMunicipio] = useState(0);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filteredData, setFilteredData] = useState([]);
+    const [isVisible, setIsVisible] = useState(true);
 
     const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
         variables: {
@@ -67,6 +70,47 @@ const ClientsList = () => {
     });
     
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
+
+    useEffect(() => {
+        if (searchTerm.length >= 3) {
+            handleSearch();
+        }else if(searchTerm.length < 3 ){
+            setFilteredData([]);
+            setIsVisible(true);
+        }
+    }, [searchTerm, dataClients]);
+
+    const handleSearch = () => {
+        if (searchTerm.length >= 3 && dataClients ) {
+            const filteredClients = dataClients.getClients.filter(cliente => {
+                const term = searchTerm.toLowerCase();
+
+                const nombre = cliente.nombre?.toLowerCase() || '';
+                const apaterno = cliente.aPaterno?.toLowerCase() || '';
+                const amaterno = cliente.aMaterno?.toLowerCase() || '';
+
+                const nombreCompleto = `${nombre} ${apaterno} ${amaterno}`.trim();
+
+                return (
+                    nombre.includes(term) ||
+                    apaterno.includes(term) ||
+                    amaterno.includes(term) ||
+                    `${nombre} ${apaterno}`.includes(term) ||
+                    `${nombre} ${amaterno}`.includes(term) ||
+                    `${apaterno} ${amaterno}`.includes(term) ||
+                    nombreCompleto.includes(term)
+                );
+            });
+
+            if (filteredClients.length === 0) {
+                setFilteredData([]);
+                setIsVisible(false);
+            } else {
+                setIsVisible(false);
+                setFilteredData(filteredClients);
+            }
+        } 
+    };
     
     if(loadingClients || loadingColonias || loadingMunicipios){
         return (
@@ -87,7 +131,7 @@ const ClientsList = () => {
     }
     
     return(
-        <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col">
+        <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col mt-10">
             <div className="flex w-9/10 justify-between items-center mb-8">
                 <div>
                     <h1 className="lg:text-4xl md:text-4xl text-2xl font-bold text-gray-800 mb-2">Lista de Clientes</h1>
@@ -113,7 +157,7 @@ const ClientsList = () => {
                         <select
                             value={municipio}
                             onChange={(e) => setMunicipio(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataMunicipios.getMunicipios.map((municipio) => (
                                 <option key={municipio.idMunicipio} value={municipio.idMunicipio}>
@@ -129,7 +173,7 @@ const ClientsList = () => {
                         <select
                             value={colonia}
                             onChange={(e) => setColonia(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataColonias.getColonias.map((colonia) => (
                                 <option key={colonia.idColonia} value={colonia.idColonia}>
@@ -141,11 +185,21 @@ const ClientsList = () => {
                     <div className="flex items-end">
                         <button
                             onClick={clearFilters}
-                            className="w-full bg-green-800 hover:bg-green-900 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                            className="w-full h-11 bg-green-800 hover:bg-green-900 text-white font-medium py-2 px-3 rounded-md transition-colors duration-200"
                         >
                             Limpiar Filtros
                         </button>
                     </div>
+                </div>
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <input
+                        type="text"
+                        placeholder="Buscar cliente..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 mt-3"
+                    />
                 </div>
             </div>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
@@ -169,21 +223,42 @@ const ClientsList = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {dataClients.getClients.map((client) => (
-                                <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-600">{client.municipio_n}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-600">{client.colonia_n}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
-                                    </td>
-                                </tr>
+                                isVisible && (
+                                    <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.municipio_n}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.colonia_n}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
+                                        </td>
+                                    </tr>
+                                )
                             ))}
+                            {!isVisible && filteredData.length > 0 ? (
+                                filteredData.map((client) => (
+                                    <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.municipio_n}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.colonia_n}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
+                                        </td>
+                                    </tr>
+                                ))
+                                                    
+                            ) : null}
                         </tbody>
                     </table>
                 </div>
