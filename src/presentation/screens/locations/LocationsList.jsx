@@ -65,6 +65,19 @@ const COLONIAS_PAGINATED = gql`
     }
 `;
 
+const MUNICIPIOS_PAGINATED = gql`
+    query GetMunicipiosPaginated($skip: Int, $limit: Int) {
+        getMunicipiosPaginated(skip: $skip, limit: $limit) {
+            total
+            items {
+                idMunicipio
+                nombre
+                status
+            }
+        }
+    }
+`;
+
 const LocationList = () => {
 
     const navigate = useNavigate();
@@ -77,14 +90,19 @@ const LocationList = () => {
 
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage2, setCurrentPage2] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
+    const skip2 = (currentPage2 - 1) * itemsPerPage;
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias, refetch: refetchColonias } = useQuery(COLONIAS_PAGINATED, {
         variables: { skip, limit: itemsPerPage },
         fetchPolicy: "network-only"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios, refetch: refetchMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios, refetch: refetchMunicipios } = useQuery(MUNICIPIOS_PAGINATED, {
+        variables: { skip: skip2, limit: itemsPerPage },
+        fetchPolicy: "network-only"
+    });
 
     const [deleteCity, { loading: loadingDeleteCity}] = useMutation(DELETE_MUNICIPIO);
 
@@ -106,7 +124,7 @@ const LocationList = () => {
     const handleSearch = () => {
         if(tabActive === 1){
             if (searchTerm.length >= 3 && dataMunicipios ) {
-                const filteredMunicipios = dataMunicipios.getMunicipiosList.filter(municipio => {
+                const filteredMunicipios = items2.filter(municipio => {
                     return municipio.nombre.toLowerCase().includes(searchTerm.toLowerCase())
                 })
     
@@ -231,10 +249,13 @@ const LocationList = () => {
 
     const { total, items } = dataColonias.getColoniasPaginated;
     const totalPages = Math.ceil(total / itemsPerPage);
-  
+
+    const { total: total2, items: items2 } = dataMunicipios.getMunicipiosPaginated;
+    const totalPages2 = Math.ceil(total2 / itemsPerPage);
+
     return(
         <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col mt-10">
-           <div className="flex w-9/10 justify-between items-center mb-8">
+            <div className="flex w-9/10 justify-between items-center mb-8">
                 <div>
                     <h1 className="lg:text-4xl md:text-4xl text-2xl font-bold text-gray-800 mb-2">Lista de Ubicaciones</h1>
                 </div>
@@ -295,7 +316,7 @@ const LocationList = () => {
             </div>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
                 <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full min-h-fit">
+                    <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
@@ -308,7 +329,7 @@ const LocationList = () => {
                         </thead>
                         {tabActive === 1 ?  
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {dataMunicipios.getMunicipiosList.map((municipio) => (
+                                {items2.map((municipio) => (
                                     isVisible && (
                                         <tr key={municipio.idMunicipio} className="w-full">
                                             <td className="px-6 py-4 whitespace-nowrap w-3/5">
@@ -623,171 +644,396 @@ const LocationList = () => {
                 <div className="md:hidden">
                     {tabActive === 1 ? 
                         <div>
-                            {dataMunicipios.getMunicipiosList.map((municipio) => (
-                                <div key={municipio.idMunicipio} className="p-6 border-b border-gray-200 last:border-b-0">
-                                    <div className="space-y-3">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900">{municipio.nombre}</h3>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-2 text-sm">
-                                            <button
-                                                onClick={() => {
-                                                    navigate(`/EditarCiudad/${municipio.idMunicipio}`);
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${municipio.status === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
-                                                disabled={municipio.status === 0}
-                                            >
-                                                <Edit size={20} className="mr-2" />
-                                                Editar
-                                            </button>
-                                            {municipio.status === 1 ? 
+                            {items2.map((municipio) => (
+                                isVisible && (
+                                    <div key={municipio.idMunicipio} className="p-6 border-b border-gray-200 last:border-b-0">
+                                        <div className="space-y-3">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">{municipio.nombre}</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-2 text-sm">
                                                 <button
                                                     onClick={() => {
-                                                        Swal.fire({
-                                                            title: "¿Desea eliminar el municipio?",
-                                                            showCancelButton: true,
-                                                            confirmButtonText: "Aceptar",
-                                                            cancelButtonText: "Cancelar",
-                                                            confirmButtonColor: "#1e8449",
-                                                            cancelButtonColor: "#f39c12"
-                                                            
-                                                            }).then((result) => {
-
-                                                            if (result.isConfirmed) {
-                                                                handleDeleteCity(municipio.idMunicipio);
-                                                            }
-                                                        }); 
-                                                        
+                                                        navigate(`/EditarCiudad/${municipio.idMunicipio}`);
                                                     }}
-                                                    className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${municipio.status === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
+                                                    disabled={municipio.status === 0}
                                                 >
-                                                    <Trash size={20} className="mr-2"/>
-                                                    Eliminar
+                                                    <Edit size={20} className="mr-2" />
+                                                    Editar
                                                 </button>
-                                                : 
-                                                <button
-                                                    onClick={() => {
+                                                {municipio.status === 1 ? 
+                                                    <button
+                                                        onClick={() => {
+                                                            Swal.fire({
+                                                                title: "¿Desea eliminar el municipio?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
 
-                                                        Swal.fire({
-                                                            title: "¿Desea activar el municipio?",
-                                                            showCancelButton: true,
-                                                            confirmButtonText: "Aceptar",
-                                                            cancelButtonText: "Cancelar",
-                                                            confirmButtonColor: "#1e8449",
-                                                            cancelButtonColor: "#f39c12"
+                                                                if (result.isConfirmed) {
+                                                                    handleDeleteCity(municipio.idMunicipio);
+                                                                }
+                                                            }); 
                                                             
-                                                            }).then((result) => {
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <Trash size={20} className="mr-2"/>
+                                                        Eliminar
+                                                    </button>
+                                                    : 
+                                                    <button
+                                                        onClick={() => {
 
-                                                            if (result.isConfirmed) {
-                                                                handleActivateCity(municipio.idMunicipio);
-                                                            }
-                                                        }); 
-                                                        
-                                                    }}
-                                                    className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                >
-                                                    <ShieldCheck size={20} className="mr-2"/>
-                                                    Activar
-                                                </button>
-                                            }
+                                                            Swal.fire({
+                                                                title: "¿Desea activar el municipio?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleActivateCity(municipio.idMunicipio);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <ShieldCheck size={20} className="mr-2"/>
+                                                        Activar
+                                                    </button>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )
                             ))}
+                            {!isVisible && filteredData.length > 0 ? (
+                                filteredData.map((municipio) => (
+                                    <div key={municipio.idMunicipio} className="p-6 border-b border-gray-200 last:border-b-0">
+                                        <div className="space-y-3">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">{municipio.nombre}</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-2 text-sm">
+                                                <button
+                                                    onClick={() => {
+                                                        navigate(`/EditarCiudad/${municipio.idMunicipio}`);
+                                                    }}
+                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${municipio.status === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
+                                                    disabled={municipio.status === 0}
+                                                >
+                                                    <Edit size={20} className="mr-2" />
+                                                    Editar
+                                                </button>
+                                                {municipio.status === 1 ? 
+                                                    <button
+                                                        onClick={() => {
+                                                            Swal.fire({
+                                                                title: "¿Desea eliminar el municipio?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleDeleteCity(municipio.idMunicipio);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <Trash size={20} className="mr-2"/>
+                                                        Eliminar
+                                                    </button>
+                                                    : 
+                                                    <button
+                                                        onClick={() => {
+
+                                                            Swal.fire({
+                                                                title: "¿Desea activar el municipio?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleActivateCity(municipio.idMunicipio);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <ShieldCheck size={20} className="mr-2"/>
+                                                        Activar
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))                           
+                            ) : null }
                         </div>
                         
                     : 
                         <div>
                             {items.map((colonia) => (
-                                <div key={colonia.idColonia} className="p-6 border-b border-gray-200 last:border-b-0">
-                                    <div className="space-y-3">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900">{colonia.nombre}</h3>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-2 text-sm">
-                                            <button
-                                                onClick={() => {
-                                                    navigate(`/EditarColonia/${colonia.idColonia}`);
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm  shadow-gray-400  ${colonia.status === 0 ? "text-gray-400" : "text-orange-600"} justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
-                                                disabled={colonia.status === 0}
-                                            >
-                                                <Edit size={20} className="mr-2" />
-                                                Editar
-                                            </button>
-                                            { colonia.status === 1 ? 
+                                isVisible && (
+                                    <div key={colonia.idColonia} className="p-6 border-b border-gray-200 last:border-b-0">
+                                        <div className="space-y-3">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">{colonia.nombre}</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-2 text-sm">
                                                 <button
                                                     onClick={() => {
-                                                        Swal.fire({
-                                                            title: "¿Desea eliminar la colonia?",
-                                                            showCancelButton: true,
-                                                            confirmButtonText: "Aceptar",
-                                                            cancelButtonText: "Cancelar",
-                                                            confirmButtonColor: "#1e8449",
-                                                            cancelButtonColor: "#f39c12"
-                                                            
-                                                            }).then((result) => {
-
-                                                            if (result.isConfirmed) {
-                                                                handleDeleteDistrict(colonia.idColonia);
-                                                            }
-                                                        }); 
-                                                        
+                                                        navigate(`/EditarColonia/${colonia.idColonia}`);
                                                     }}
-                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    className={`w-full cursor-pointer shadow-sm  shadow-gray-400  ${colonia.status === 0 ? "text-gray-400" : "text-orange-600"} justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
+                                                    disabled={colonia.status === 0}
                                                 >
-                                                    <Trash size={20} className="mr-2"/>
-                                                    Eliminar
+                                                    <Edit size={20} className="mr-2" />
+                                                    Editar
                                                 </button>
-                                                : 
-                                                <button
-                                                    onClick={() => {
+                                                { colonia.status === 1 ? 
+                                                    <button
+                                                        onClick={() => {
+                                                            Swal.fire({
+                                                                title: "¿Desea eliminar la colonia?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
 
-                                                        Swal.fire({
-                                                            title: "¿Desea activar la colonia?",
-                                                            showCancelButton: true,
-                                                            confirmButtonText: "Aceptar",
-                                                            cancelButtonText: "Cancelar",
-                                                            confirmButtonColor: "#1e8449",
-                                                            cancelButtonColor: "#f39c12"
+                                                                if (result.isConfirmed) {
+                                                                    handleDeleteDistrict(colonia.idColonia);
+                                                                }
+                                                            }); 
                                                             
-                                                            }).then((result) => {
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <Trash size={20} className="mr-2"/>
+                                                        Eliminar
+                                                    </button>
+                                                    : 
+                                                    <button
+                                                        onClick={() => {
 
-                                                            if (result.isConfirmed) {
-                                                                handleActivateDistrict(colonia.idColonia);
-                                                            }
-                                                        }); 
-                                                        
-                                                    }}
-                                                    className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                >
-                                                    <ShieldCheck size={20} className="mr-2"/>
-                                                    Activar
-                                                </button>
-                                            }
+                                                            Swal.fire({
+                                                                title: "¿Desea activar la colonia?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleActivateDistrict(colonia.idColonia);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <ShieldCheck size={20} className="mr-2"/>
+                                                        Activar
+                                                    </button>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )
                             ))}
+                            {!isVisible && filteredData.length > 0 ? (
+                                filteredData.map((colonia) => (
+                                    <div key={colonia.idColonia} className="p-6 border-b border-gray-200 last:border-b-0">
+                                        <div className="space-y-3">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">{colonia.nombre}</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-2 text-sm">
+                                                <button
+                                                    onClick={() => {
+                                                        navigate(`/EditarColonia/${colonia.idColonia}`);
+                                                    }}
+                                                    className={`w-full cursor-pointer shadow-sm  shadow-gray-400  ${colonia.status === 0 ? "text-gray-400" : "text-orange-600"} justify-center rounded-2xl font-semibold  flex items-center p-2 mb-3`}
+                                                    disabled={colonia.status === 0}
+                                                >
+                                                    <Edit size={20} className="mr-2" />
+                                                    Editar
+                                                </button>
+                                                { colonia.status === 1 ? 
+                                                    <button
+                                                        onClick={() => {
+                                                            Swal.fire({
+                                                                title: "¿Desea eliminar la colonia?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleDeleteDistrict(colonia.idColonia);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <Trash size={20} className="mr-2"/>
+                                                        Eliminar
+                                                    </button>
+                                                    : 
+                                                    <button
+                                                        onClick={() => {
+
+                                                            Swal.fire({
+                                                                title: "¿Desea activar la colonia?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleActivateDistrict(colonia.idColonia);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    >
+                                                        <ShieldCheck size={20} className="mr-2"/>
+                                                        Activar
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))                           
+                            ) : null }
                         </div>
                     }
                 </div>
             </div>
-            <div className="flex justify-center mt-6 space-x-2">
-                {Array.from({ length: totalPages }).map((_, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`px-4 py-2 border rounded ${
-                        currentPage === index + 1
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                        {index + 1}
+            {tabActive === 1 && totalPages2 > 1 ?  
+                <div className="hidden sm:flex justify-center items-center mt-16">
+                    {Array.from({ length: totalPages2 }).map((_, index) => (
+                        isVisible && tabActive === 1 && (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentPage2(index + 1)}
+                                className={`px-4 py-2 shadow-md rounded ${
+                                currentPage2 === index + 1
+                                    ? 'bg-green-800 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                {index + 1}
+                            </button>
+                        )
+                    ))}
+                </div> 
+                : 
+                null
+            }
+            {tabActive === 2 && totalPages > 1 ?  
+                <div className="hidden sm:flex justify-center items-center mt-16 mb-10">
+                    {Array.from({ length: totalPages }).map((_, index) => (
+                        isVisible && tabActive === 2 && (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentPage(index + 1)}
+                                className={`px-4 py-2 shadow-md rounded ${
+                                currentPage === index + 1
+                                    ? 'bg-green-800 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                {index + 1}
+                            </button>
+                        )
+                    ))}
+                </div>
+                : 
+                null
+            }
+            
+            {tabActive === 1 && totalPages2 > 1? 
+                <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">
+                    <button className={`${currentPage2 !== 1 ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        if(currentPage2 !== 1){
+                            setCurrentPage2(currentPage2 - 1);
+                        }
+                    }}>
+                        Anterior
                     </button>
-                ))}
-            </div>
+                    <button className={`${currentPage2 < totalPages2  ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        
+                        if(currentPage2 < totalPages2){
+                            setCurrentPage2(currentPage2 + 1);
+                        }
+                    }}>
+                        Siguiente
+                    </button>
+                </div>
+            :
+               null
+            }
+            {tabActive === 2 && totalPages > 1 ? 
+                <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">
+                    <button className={`${currentPage !== 1 ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        if(currentPage !== 1){
+                            setCurrentPage(currentPage - 1);
+                        }
+                    }}>
+                        Anterior
+                    </button>
+                    <button className={`${currentPage < totalPages  ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        
+                        if(currentPage < totalPages){
+                            setCurrentPage(currentPage + 1);
+                        }
+                    }}>
+                        Siguiente
+                    </button>
+                </div> 
+            :
+                null
+            }
+            
         </div>
     );
 }

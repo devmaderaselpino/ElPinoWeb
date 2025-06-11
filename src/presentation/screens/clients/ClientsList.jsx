@@ -6,22 +6,27 @@ import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 
 const CLIENTS_LIST = gql`
-    query GetClients($input: ClientsInput) {
-        getClients(input: $input) {
-            idCliente
-            nombre
-            aPaterno
-            aMaterno
-            municipio
-            municipio_n
-            colonia
-            colonia_n
-            calle
-            numero_ext
-            celular
-            distinguido
-            img_domicilio
-            descripcion
+    query GetClientsPaginated($input: PaginatedInput) {
+        getClientsPaginated(input: $input) {
+            total
+            items {
+                idCliente
+                nombre
+                aPaterno
+                aMaterno
+                municipio
+                municipio_n
+                colonia
+                colonia_n
+                calle
+                numero_ext
+                celular
+                distinguido
+                img_domicilio
+                descripcion
+                fecha_reg
+                status
+            }
         }
     }
 `;
@@ -54,11 +59,18 @@ const ClientsList = () => {
     const [filteredData, setFilteredData] = useState([]);
     const [isVisible, setIsVisible] = useState(true);
 
+    const itemsPerPage = 10;
+    const [currentPage, setCurrentPage] = useState(1);
+    const skip = (currentPage - 1) * itemsPerPage;
+
+
     const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
         variables: {
             input: {
                 idMunicipio: parseInt(municipio),
-                idColonia: parseInt(colonia)
+                idColonia: parseInt(colonia),
+                skip,
+                limit: itemsPerPage
             }
         }, fetchPolicy: "network-only"
     });
@@ -82,7 +94,7 @@ const ClientsList = () => {
 
     const handleSearch = () => {
         if (searchTerm.length >= 3 && dataClients ) {
-            const filteredClients = dataClients.getClients.filter(cliente => {
+            const filteredClients = items.filter(cliente => {
                 const term = searchTerm.toLowerCase();
 
                 const nombre = cliente.nombre?.toLowerCase() || '';
@@ -129,6 +141,9 @@ const ClientsList = () => {
         setColonia(0);
         setMunicipio(0);
     }
+
+    const { total, items } = dataClients.getClientsPaginated;
+    const totalPages = Math.ceil(total / itemsPerPage);
     
     return(
         <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col mt-10">
@@ -156,7 +171,7 @@ const ClientsList = () => {
                         </label>
                         <select
                             value={municipio}
-                            onChange={(e) => setMunicipio(e.target.value)}
+                            onChange={(e) => {setMunicipio(e.target.value); setCurrentPage(1);}}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataMunicipios.getMunicipios.map((municipio) => (
@@ -172,7 +187,7 @@ const ClientsList = () => {
                         </label>
                         <select
                             value={colonia}
-                            onChange={(e) => setColonia(e.target.value)}
+                            onChange={(e) => {setColonia(e.target.value); setCurrentPage(1);}}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataColonias.getColonias.map((colonia) => (
@@ -222,7 +237,7 @@ const ClientsList = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {dataClients.getClients.map((client) => (
+                            {items.map((client) => (
                                 isVisible && (
                                     <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -263,31 +278,101 @@ const ClientsList = () => {
                     </table>
                 </div>
                 <div className="md:hidden">
-                    {dataClients.getClients.map((client) => (
-                        <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                            <div className="space-y-3">
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
-                                </div>
-                                <div className="grid grid-cols-1 gap-2 text-sm">
+                    {items.map((client) => (
+                        isVisible && (
+                            <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                                <div className="space-y-3">
                                     <div>
-                                        <span className="font-medium text-gray-600">Municipio:</span>
-                                        <span className="ml-2 text-gray-800">{client.municipio_n}</span>
+                                        <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
                                     </div>
-                                    <div>
-                                        <span className="font-medium text-gray-600">Colonia:</span>
-                                        <span className="ml-2 text-gray-800">{client.colonia_n}</span>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium text-gray-600">Calle:</span>
-                                        <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
+                                    <div className="grid grid-cols-1 gap-2 text-sm">
+                                        <div>
+                                            <span className="font-medium text-gray-600">Municipio:</span>
+                                            <span className="ml-2 text-gray-800">{client.municipio_n}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-600">Colonia:</span>
+                                            <span className="ml-2 text-gray-800">{client.colonia_n}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-600">Calle:</span>
+                                            <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )
                     ))}
+                    {!isVisible && filteredData.length > 0 ? (
+                        filteredData.map((client) => (
+                            <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2 text-sm">
+                                        <div>
+                                            <span className="font-medium text-gray-600">Municipio:</span>
+                                            <span className="ml-2 text-gray-800">{client.municipio_n}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-600">Colonia:</span>
+                                            <span className="ml-2 text-gray-800">{client.colonia_n}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-600">Calle:</span>
+                                            <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                                            
+                    ) : null}
                 </div>
             </div>
+            {totalPages > 1 && isVisible?  
+                <div className="hidden sm:flex justify-center items-center mt-16">
+                    {Array.from({ length: totalPages }).map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentPage(index + 1)}
+                            className={`px-4 py-2 shadow-md rounded ${
+                            currentPage === index + 1
+                                ? 'bg-green-800 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div> 
+                : 
+                null
+            }
+            {totalPages > 1 ? 
+                <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">
+                    <button className={`${currentPage !== 1 ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        if(currentPage !== 1){
+                            setCurrentPage(currentPage - 1);
+                        }
+                    }}>
+                        Anterior
+                    </button>
+                    <button className={`${currentPage < totalPages  ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    onClick={()=>{
+                        
+                        if(currentPage < totalPages){
+                            setCurrentPage(currentPage + 1);
+                        }
+                    }}>
+                        Siguiente
+                    </button>
+                </div> 
+            :
+                null
+            }
         </div>
     );
 }
