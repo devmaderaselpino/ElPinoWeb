@@ -226,13 +226,13 @@ const ClientsList = () => {
                                     Nombre
                                 </th>
                                 <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
-                                    Calle
+                                    Municipio
                                 </th>
                                 <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
                                     Colonia
                                 </th>
                                 <th className="px-6 py-4 text-left text-base font-bold text-black tracking-wider">
-                                    Municipio
+                                    Calle
                                 </th>
                             </tr>
                         </thead>

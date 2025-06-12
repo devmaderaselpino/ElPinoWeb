@@ -14,6 +14,10 @@ import NewDistrictForm from '../screens/locations/NewDistrictForm';
 import EditCity from '../screens/locations/EditCity';
 import EditDistrict from '../screens/locations/EditDistrict';
 import ProtectedRoutes from './guards/ProtectedRoutes';
+import EmployeesList from '../screens/employees/EmployeesList';
+import NewEmployeeForm from '../screens/employees/NewEmployeeForm';
+import EditEmployee from '../screens/employees/EditEmployee';
+import EmployeeDetails from '../screens/employees/EmployeeDetails';
 
 const MainNavigation = () => {
 
@@ -38,6 +42,10 @@ const MainNavigation = () => {
                     <Route path="/Ubicaciones" element={<LocationList />} />
                     <Route path="/EditarCiudad/:idCiudad" element={<EditCity />} />
                     <Route path="/EditarColonia/:idColonia" element={<EditDistrict />} />
+                    <Route path="/ListaEmpleados" element={<EmployeesList />} />
+                    <Route path="/AgregarEmpleado" element={<NewEmployeeForm />} />
+                    <Route path="/EditarEmpleado/:idUsuario" element={<EditEmployee />} />
+                    <Route path="/DetalleEmpleado/:idUsuario" element={<EmployeeDetails />} />
                 </Route>
             </Routes>
         </>

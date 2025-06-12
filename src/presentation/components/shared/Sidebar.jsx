@@ -5,7 +5,7 @@ const navigation = [
     { name: "Home", href: "/", icon: Home },
     { name: "Venta", href: "#", icon: Banknote },
     { name: "Tarjetas", href: "#", icon: CreditCard },
-    { name: "Empleados", href: "#", icon: Users },
+    { name: "Empleados", href: "/ListaEmpleados", icon: Users },
     { name: "Inventario", href: "#", icon: Warehouse },
     { name: "Clientes", href: "/ListaClientes", icon: Users },
     { name: "Historial Abonos", href: "#", icon: HandCoins },

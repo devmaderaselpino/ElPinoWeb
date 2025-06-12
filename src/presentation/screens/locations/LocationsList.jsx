@@ -315,7 +315,7 @@ const LocationList = () => {
                 />
             </div>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block overflow-x-auto min-h-150">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>

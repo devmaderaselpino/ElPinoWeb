@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, gql, useMutation } from '@apollo/client';
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 
@@ -23,15 +23,37 @@ const MUNICIPIOS_LIST = gql`
     }
 `;
 
-const INSERT_EMPLOYEE = gql`
-    mutation InsertEmployee($input: UserInput) {
-        insertEmployee(input: $input)
+const EDIT_EMPLOYEE = gql`
+    mutation EditEmployee($input: UserInput) {
+        editEmployee(input: $input)
     }
 `;
 
-const NewEmployeeForm = () => {
+const EMPLOYEE_INFO = gql`
+    query GetEmployee($idUsuario: Int) {
+        getEmployee(idUsuario: $idUsuario) {
+            idUsuario
+            nombre
+            aPaterno
+            aMaterno
+            tipo
+            status
+            celular
+            municipio
+            colonia
+            calle
+            numero_ext
+            usuario
+            password
+        }
+    }
+`;
+
+const EditEmployee = () => {
 
     const navigate = useNavigate();
+
+    const { idUsuario } = useParams();
     
     const [name, setName] = useState("");
     const [lastNameP, setLastNameP] = useState("");
@@ -58,6 +80,12 @@ const NewEmployeeForm = () => {
     const [errorUser, setErrorUser] = useState(false);
     const [errorPassword, setErrorPassword] = useState(false);
 
+     const { loading, error, data } = useQuery(EMPLOYEE_INFO, {
+            variables: {
+                idUsuario: parseInt(idUsuario)
+            }, fetchPolicy: "network-only"
+    });
+
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(municipio)
@@ -66,7 +94,23 @@ const NewEmployeeForm = () => {
     
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
 
-    const [insertEmployee, { loading: loadingInsert}] = useMutation(INSERT_EMPLOYEE);
+    const [editEmployee, { loading: loadingUpdate}] = useMutation(EDIT_EMPLOYEE);
+
+    useEffect(()=> {
+        if(data){
+            setName(data.getEmployee.nombre);
+            setLastNameP(data.getEmployee.aPaterno);
+            setLastNameM(data.getEmployee.aMaterno);
+            setPhone(data.getEmployee.celular);
+            setMunicipio(data.getEmployee.municipio);
+            setColonia(data.getEmployee.colonia);
+            setStreet(data.getEmployee.calle);
+            setNumber(data.getEmployee.numero_ext);
+            setUser(data.getEmployee.usuario);
+            setPassword(data.getEmployee.password);
+            setType(data.getEmployee.tipo);
+        }
+    },[data])
 
     const handleSubmit = async (e) => {
 
@@ -90,9 +134,10 @@ const NewEmployeeForm = () => {
         }
 
         try {
-            const resp = await insertEmployee({
+            const resp = await editEmployee({
                 variables: {
                     input: {
+                        idUsuario: parseInt(idUsuario),
                         aMaterno: lastNameM,
                         aPaterno: lastNameP,
                         calle: street,
@@ -108,10 +153,10 @@ const NewEmployeeForm = () => {
                 }
             })
      
-            if(resp.data.insertEmployee ===  "Empleado insertado"){
+            if(resp.data.editEmployee ===  "Empleado actualizado"){
 
                 Swal.fire({
-                    title: "Empleado agregado con éxito!",
+                    title: "Empleado actualizado con éxito!",
                     text: "Serás redirigido a la lista de empleados.",
                     icon: "success",
                     confirmButtonText: "Aceptar",
@@ -127,7 +172,7 @@ const NewEmployeeForm = () => {
         } catch (error) {
 
             Swal.fire({
-                title: "¡Ha ocurrido un error agregando al empleado!",
+                title: "¡Ha ocurrido un error actualizando al empleado!",
                 text: "Inténtelo más tarde.",
                 icon: "error",
                 confirmButtonText: "Aceptar",
@@ -137,7 +182,7 @@ const NewEmployeeForm = () => {
 
     }
 
-    if(loadingColonias || loadingMunicipios || loadingInsert ){
+    if(loadingColonias || loadingMunicipios || loadingUpdate || loading){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -146,7 +191,7 @@ const NewEmployeeForm = () => {
         );
     }
 
-    if( errorColonias || errorMunicipios) {
+    if( errorColonias || errorMunicipios || error) {
         return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
@@ -177,7 +222,7 @@ const NewEmployeeForm = () => {
         <>
             <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full h-screen">
                 <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Registro de Empleado</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Editar Empleado</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -402,4 +447,4 @@ const NewEmployeeForm = () => {
     )
 }
 
-export default NewEmployeeForm;
+export default EditEmployee;
