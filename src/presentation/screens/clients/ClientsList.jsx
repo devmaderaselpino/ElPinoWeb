@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useLazyQuery } from '@apollo/client';
 import { useNavigate } from "react-router-dom";
 import { UserRoundPlus, Filter, Search } from 'lucide-react';
 import Loading from "../../components/shared/Loading";
@@ -64,16 +64,19 @@ const ClientsList = () => {
     const skip = (currentPage - 1) * itemsPerPage;
 
 
-    const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
-        variables: {
-            input: {
-                idMunicipio: parseInt(municipio),
-                idColonia: parseInt(colonia),
-                skip,
-                limit: itemsPerPage
-            }
-        }, fetchPolicy: "network-only"
-    });
+    // const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
+    //     variables: {
+    //         input: {
+    //             idMunicipio: parseInt(municipio),
+    //             idColonia: parseInt(colonia),
+    //             skip,
+    //             limit: itemsPerPage,
+    //             searchName: "Isaac"
+    //         }
+    //     }, fetchPolicy: "network-only"
+    // });
+
+    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:"network-only"});
     
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
@@ -84,46 +87,33 @@ const ClientsList = () => {
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
 
     useEffect(() => {
-        if (searchTerm.length >= 3) {
-            handleSearch();
-        }else if(searchTerm.length < 3 ){
-            setFilteredData([]);
-            setIsVisible(true);
-        }
-    }, [searchTerm, dataClients]);
+        loadClients({
+            variables: {
+                input: {
+                    idMunicipio: municipio,
+                    idColonia: colonia,
+                    skip,
+                    limit: itemsPerPage,
+                    searchName: searchTerm,
+                },
+            },
+        });
+    }, []);
 
-    const handleSearch = () => {
-        if (searchTerm.length >= 3 && dataClients ) {
-            const filteredClients = items.filter(cliente => {
-                const term = searchTerm.toLowerCase();
-
-                const nombre = cliente.nombre?.toLowerCase() || '';
-                const apaterno = cliente.aPaterno?.toLowerCase() || '';
-                const amaterno = cliente.aMaterno?.toLowerCase() || '';
-
-                const nombreCompleto = `${nombre} ${apaterno} ${amaterno}`.trim();
-
-                return (
-                    nombre.includes(term) ||
-                    apaterno.includes(term) ||
-                    amaterno.includes(term) ||
-                    `${nombre} ${apaterno}`.includes(term) ||
-                    `${nombre} ${amaterno}`.includes(term) ||
-                    `${apaterno} ${amaterno}`.includes(term) ||
-                    nombreCompleto.includes(term)
-                );
-            });
-
-            if (filteredClients.length === 0) {
-                setFilteredData([]);
-                setIsVisible(false);
-            } else {
-                setIsVisible(false);
-                setFilteredData(filteredClients);
-            }
-        } 
+    const fetchClients = () => {
+        loadClients({
+            variables: {
+                input: {
+                    idMunicipio: municipio,
+                    idColonia: colonia,
+                    skip,
+                    limit: itemsPerPage,
+                    searchName: searchTerm,
+                },
+            },
+        });
     };
-    
+ 
     if(loadingClients || loadingColonias || loadingMunicipios){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
@@ -140,11 +130,13 @@ const ClientsList = () => {
     const clearFilters = () => {
         setColonia(0);
         setMunicipio(0);
+        setSearchTerm("");
+        fetchClients();
     }
 
     const { total, items } = dataClients.getClientsPaginated;
     const totalPages = Math.ceil(total / itemsPerPage);
-    
+
     return(
         <div className="flex justify-center items-center flex-col mt-10">
             <div className="flex w-9/10 justify-between items-center mb-8">
@@ -158,6 +150,7 @@ const ClientsList = () => {
                     <UserRoundPlus size={20} />
                     Agregar Cliente
                 </button>
+                <button onClick={fetchClients}>Buscar</button>
             </div>
             <div className="bg-white mb-6 w-9/10">
                 <div className="flex items-center gap-2 mb-4">
@@ -212,6 +205,11 @@ const ClientsList = () => {
                         type="text"
                         placeholder="Buscar cliente..."
                         value={searchTerm}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                fetchClients();
+                            }
+                        }}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 mt-3"
                     />
