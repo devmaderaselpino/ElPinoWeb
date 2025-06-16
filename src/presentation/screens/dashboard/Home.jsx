@@ -116,7 +116,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="w-full lg:pl-64 md:pl-64 h-screen flex justify-center">
+        <div className="w-full  h-screen flex justify-center">
             
             <div className="w-full max-w-7xl mx-auto p-6">
                 <div className="flex items-center justify-center gap-4 mb-4">

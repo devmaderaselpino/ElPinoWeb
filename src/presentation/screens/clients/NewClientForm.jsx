@@ -297,7 +297,7 @@ const NewClientForm = () => {
     return (
         <>
             {!isModalOpen ? 
-                <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full h-screen">
+                <div className="flex justify-center items-center flex-col w-full h-screen">
                     <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Registro de Cliente</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -532,7 +532,7 @@ const NewClientForm = () => {
                     </form>
                 </div>
             : 
-                <div className="lg:pl-64 md:pl-64 flex justify-center items-center flex-col w-full">
+                <div className="flex justify-center items-center flex-col w-full">
                     <h1 className="text-3xl font-bold text-center mb-10">Lista de coincidencias</h1>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
                         <div className="hidden md:block overflow-x-auto">
