@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, gql, useMutation, useLazyQuery } from '@apollo/client';
+import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import { useNavigate } from "react-router-dom";
 import { UserRoundPlus, Edit, Trash, Search, Eye, ShieldCheck  } from 'lucide-react';
 import Loading from "../../components/shared/Loading";
@@ -160,7 +160,7 @@ const EmployeesList = () => {
                         type="text"
                         placeholder="Buscar empleado..."
                         value={searchTerm}
-                         onKeyDown={(e) => {
+                        onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 setCurrentPage(1);
                                 fetchEmployees();

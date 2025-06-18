@@ -83,7 +83,7 @@ const ClientsList = () => {
                 },
             },
         });
-    }, [municipio, colonia, currentPage]);
+    }, [municipio, colonia, currentPage, dataClients]);
 
     const fetchClients = async () => {
         
@@ -113,12 +113,6 @@ const ClientsList = () => {
         console.log(errorClients);
         
         return <ErrorPage message={"Inténtelo más tarde."}/>
-    }
-
-    const clearFilters = () => {
-        setColonia(0);
-        setMunicipio(0);
-        setSearchTerm("");
     }
 
     const { total, items } = dataClients.getClientsPaginated;
@@ -178,7 +172,11 @@ const ClientsList = () => {
                     </div>
                     <div className="flex items-end">
                         <button
-                            onClick={clearFilters}
+                            onClick={() => {
+                                if(searchTerm || colonia !== 0 || municipio !== 0){
+                                    window.location.reload();
+                                }
+                            }}
                             className="w-full h-11 bg-green-800 hover:bg-green-900 text-white font-medium py-2 px-3 rounded-md transition-colors duration-200"
                         >
                             Limpiar Filtros
