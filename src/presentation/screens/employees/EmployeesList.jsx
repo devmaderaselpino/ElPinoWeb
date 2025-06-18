@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, gql, useMutation } from '@apollo/client';
+import { useQuery, gql, useMutation, useLazyQuery } from '@apollo/client';
 import { useNavigate } from "react-router-dom";
 import { UserRoundPlus, Edit, Trash, Search, Eye, ShieldCheck  } from 'lucide-react';
 import Loading from "../../components/shared/Loading";
@@ -7,8 +7,8 @@ import ErrorPage from "../../components/shared/ErrorPage";
 import Swal from "sweetalert2";
 
 const EMPLOYEES_LIST = gql`
-    query GetEmployeesPaginated($skip: Int, $limit: Int) {
-        getEmployeesPaginated(skip: $skip, limit: $limit) {
+    query GetEmployeesPaginated($input: PaginatedInput) {
+        getEmployeesPaginated(input: $input) {
             total
             items {
                 idUsuario
@@ -17,6 +17,7 @@ const EMPLOYEES_LIST = gql`
                 aMaterno
                 tipo
                 status
+            
             }
         }
     }
@@ -39,22 +40,12 @@ const EmployeesList = () => {
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [filteredData, setFilteredData] = useState([]);
-    const [isVisible, setIsVisible] = useState(true);
-
-    const itemsPerPage = 1;
+   
+    const itemsPerPage = 2;
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 
-
-    const { loading, error, data, refetch } = useQuery(EMPLOYEES_LIST, {
-        variables: {
-            
-            skip,
-            limit: itemsPerPage
-            
-        }, fetchPolicy: "network-only"
-    });
+    const [getEmployees, { loading, data, error }] = useLazyQuery(EMPLOYEES_LIST, {fetchPolicy:"network-only"});
 
     const [deleteEmployee, { loading: loadingDeleteEmployee}] = useMutation(DELETE_EMPLOYEE);
 
@@ -70,7 +61,7 @@ const EmployeesList = () => {
             });
 
             if(resp.data.activateEmployee === "Empleado activado"){
-                refetch();
+                fetchEmployees();
             }
            
         } catch (error) {
@@ -90,7 +81,7 @@ const EmployeesList = () => {
             });
 
             if(resp.data.deleteEmployee === "Empleado eliminado"){
-                refetch();
+                fetchEmployees();
             }
            
         } catch (error) {
@@ -100,47 +91,6 @@ const EmployeesList = () => {
        
     }
     
-    useEffect(() => {
-        if (searchTerm.length >= 3) {
-            handleSearch();
-        }else if(searchTerm.length < 3 ){
-            setFilteredData([]);
-            setIsVisible(true);
-        }
-    }, [searchTerm, data]);
-
-    const handleSearch = () => {
-        if (searchTerm.length >= 3 && data ) {
-            const filteredClients = items.filter(cliente => {
-                const term = searchTerm.toLowerCase();
-
-                const nombre = cliente.nombre?.toLowerCase() || '';
-                const apaterno = cliente.aPaterno?.toLowerCase() || '';
-                const amaterno = cliente.aMaterno?.toLowerCase() || '';
-
-                const nombreCompleto = `${nombre} ${apaterno} ${amaterno}`.trim();
-
-                return (
-                    nombre.includes(term) ||
-                    apaterno.includes(term) ||
-                    amaterno.includes(term) ||
-                    `${nombre} ${apaterno}`.includes(term) ||
-                    `${nombre} ${amaterno}`.includes(term) ||
-                    `${apaterno} ${amaterno}`.includes(term) ||
-                    nombreCompleto.includes(term)
-                );
-            });
-
-            if (filteredClients.length === 0) {
-                setFilteredData([]);
-                setIsVisible(false);
-            } else {
-                setIsVisible(false);
-                setFilteredData(filteredClients);
-            }
-        } 
-    };
-
     const typeUser = (userId) => {
         switch(userId){
             case 1:
@@ -151,6 +101,30 @@ const EmployeesList = () => {
                 return "Cobrador";
         }
     }
+
+    useEffect(() => {
+        getEmployees({
+            variables: {
+                input: {
+                    limit: itemsPerPage,
+                    skip,
+                    searchName: searchTerm
+                }
+            }
+        });
+    }, [currentPage]);
+
+    const fetchEmployees = async () => {
+        getEmployees({
+            variables: {
+                input: {
+                    limit: itemsPerPage,
+                    skip,
+                    searchName: searchTerm
+                }
+            }
+        });
+    };
     
     if(loading || loadingDeleteEmployee || loadingActivateEmployee){
         return (
@@ -164,9 +138,6 @@ const EmployeesList = () => {
     if(error) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-
-    const { total, items } = data.getEmployeesPaginated;
-    const totalPages = Math.ceil(total / itemsPerPage);
 
     return(
         <div className="flex justify-center items-center flex-col mt-10">
@@ -189,6 +160,12 @@ const EmployeesList = () => {
                         type="text"
                         placeholder="Buscar empleado..."
                         value={searchTerm}
+                         onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                setCurrentPage(1);
+                                fetchEmployees();
+                            }
+                        }}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 mt-3"
                     />
@@ -211,359 +188,185 @@ const EmployeesList = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {items.map((empleado) => (
-                                isVisible && (
-                                    <tr key={empleado.idUsuario}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{typeUser(empleado.tipo)}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="bg-white w-full">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {data?.getEmployeesPaginated?.items?.map((empleado) => (
+                                
+                                <tr key={empleado.idUsuario}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{typeUser(empleado.tipo)}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="bg-white w-full">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <button
+                                                    onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
+                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    disabled={empleado.status  === 0}
+                                                >
+                                                    <Eye size={20} className="mr-2" />
+                                                    Ver detalle
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
+                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                                    disabled={empleado.status  === 0}
+                                                >
+                                                    <Edit size={20} className="mr-2" />
+                                                    Editar
+                                                </button>
+                                                {empleado.status === 1 ? 
                                                     <button
-                                                        onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        disabled={empleado.status  === 0}
+                                                        onClick={() => {
+
+                                                            Swal.fire({
+                                                                title: "¿Desea eliminar el empleado?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleDeleteEmployee(empleado.idUsuario)
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
                                                     >
-                                                        <Eye size={20} className="mr-2" />
-                                                        Ver detalle
+                                                        <Trash size={20} className="mr-2"/>
+                                                        Eliminar
                                                     </button>
+                                                    : 
                                                     <button
-                                                        onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
-                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        disabled={empleado.status  === 0}
+                                                        onClick={() => {
+
+                                                            Swal.fire({
+                                                                title: "¿Desea activar el empleado?",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Aceptar",
+                                                                cancelButtonText: "Cancelar",
+                                                                confirmButtonColor: "#1e8449",
+                                                                cancelButtonColor: "#f39c12"
+                                                                
+                                                                }).then((result) => {
+
+                                                                if (result.isConfirmed) {
+                                                                    handleActivateEmployee(empleado.idUsuario);
+                                                                }
+                                                            }); 
+                                                            
+                                                        }}
+                                                        className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
                                                     >
-                                                        <Edit size={20} className="mr-2" />
-                                                        Editar
+                                                        <ShieldCheck size={20} className="mr-2"/>
+                                                        Activar
                                                     </button>
-                                                    {empleado.status === 1 ? 
-                                                        <button
-                                                            onClick={() => {
-
-                                                                Swal.fire({
-                                                                    title: "¿Desea eliminar el empleado?",
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: "Aceptar",
-                                                                    cancelButtonText: "Cancelar",
-                                                                    confirmButtonColor: "#1e8449",
-                                                                    cancelButtonColor: "#f39c12"
-                                                                    
-                                                                    }).then((result) => {
-
-                                                                    if (result.isConfirmed) {
-                                                                        handleDeleteEmployee(empleado.idUsuario)
-                                                                    }
-                                                                }); 
-                                                                
-                                                            }}
-                                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        >
-                                                            <Trash size={20} className="mr-2"/>
-                                                            Eliminar
-                                                        </button>
-                                                        : 
-                                                        <button
-                                                            onClick={() => {
-
-                                                                Swal.fire({
-                                                                    title: "¿Desea activar el empleado?",
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: "Aceptar",
-                                                                    cancelButtonText: "Cancelar",
-                                                                    confirmButtonColor: "#1e8449",
-                                                                    cancelButtonColor: "#f39c12"
-                                                                    
-                                                                    }).then((result) => {
-
-                                                                    if (result.isConfirmed) {
-                                                                        handleActivateEmployee(empleado.idUsuario);
-                                                                    }
-                                                                }); 
-                                                                
-                                                            }}
-                                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        >
-                                                            <ShieldCheck size={20} className="mr-2"/>
-                                                            Activar
-                                                        </button>
-                                                    }
-                                                </div>
+                                                }
                                             </div>
-                                        </td>
-                                    </tr>
-                                )
+                                        </div>
+                                    </td>
+                                </tr>
+                                
                             ))}
-                            {!isVisible && filteredData.length > 0 ? (
-                                filteredData.map((empleado) => (
-                                    <tr key={empleado.idUsuario}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno} </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{typeUser(empleado.tipo)}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="bg-white w-full">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <button
-                                                        onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        disabled={empleado.status  === 0}
-                                                    >
-                                                        <Eye size={20} className="mr-2" />
-                                                        Ver detalle
-                                                    </button>
-                                                    <button
-                                                        onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
-                                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        disabled={empleado.status  === 0}
-                                                    >
-                                                        <Edit size={20} className="mr-2" />
-                                                        Editar
-                                                    </button>
-                                                    {empleado.status === 1 ? 
-                                                        <button
-                                                            onClick={() => {
-
-                                                                Swal.fire({
-                                                                    title: "¿Desea eliminar el empleado?",
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: "Aceptar",
-                                                                    cancelButtonText: "Cancelar",
-                                                                    confirmButtonColor: "#1e8449",
-                                                                    cancelButtonColor: "#f39c12"
-                                                                    
-                                                                    }).then((result) => {
-
-                                                                    if (result.isConfirmed) {
-                                                                        handleDeleteEmployee(empleado.idUsuario)
-                                                                    }
-                                                                }); 
-                                                                
-                                                            }}
-                                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        >
-                                                            <Trash size={20} className="mr-2"/>
-                                                            Eliminar
-                                                        </button>
-                                                        : 
-                                                        <button
-                                                            onClick={() => {
-
-                                                                Swal.fire({
-                                                                    title: "¿Desea activar el empleado?",
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: "Aceptar",
-                                                                    cancelButtonText: "Cancelar",
-                                                                    confirmButtonColor: "#1e8449",
-                                                                    cancelButtonColor: "#f39c12"
-                                                                    
-                                                                    }).then((result) => {
-
-                                                                    if (result.isConfirmed) {
-                                                                        handleActivateEmployee(empleado.idUsuario);
-                                                                    }
-                                                                }); 
-                                                                
-                                                            }}
-                                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                        >
-                                                            <ShieldCheck size={20} className="mr-2"/>
-                                                            Activar
-                                                        </button>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                                                    
-                            ) : null}
                         </tbody>
                     </table>
                 </div>
                 <div className="md:hidden">
-                    {items.map((empleado) => (
-                        isVisible && (
-                            <div key={empleado.idUsuario} className="p-6 border-b border-gray-200 last:border-b-0">
-                                <div className="space-y-3">
+                    {data?.getEmployeesPaginated?.items?.map((empleado) => (
+                        <div key={empleado.idUsuario} className="p-6 border-b border-gray-200 last:border-b-0">
+                            <div className="space-y-3">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno}</h3>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 text-sm">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno}</h3>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-2 text-sm">
-                                        <div>
-                                            <span className="font-medium text-gray-600">Tipo:</span>
-                                            <span className="ml-2 text-gray-800">{typeUser(empleado.tipo)}</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <button
-                                            onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                            className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            disabled={empleado.status  === 0}
-                                        >
-                                            <Eye size={20} className="mr-2" />
-                                            Ver detalle
-                                        </button>
-                                        <button
-                                            onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
-                                            className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            disabled={empleado.status  === 0}
-                                        >
-                                            <Edit size={20} className="mr-2" />
-                                            Editar
-                                        </button>
-                                        {empleado.status === 1 ? 
-                                            <button
-                                                onClick={() => {
-
-                                                    Swal.fire({
-                                                        title: "¿Desea eliminar el empleado?",
-                                                        showCancelButton: true,
-                                                        confirmButtonText: "Aceptar",
-                                                        cancelButtonText: "Cancelar",
-                                                        confirmButtonColor: "#1e8449",
-                                                        cancelButtonColor: "#f39c12"
-                                                        
-                                                        }).then((result) => {
-
-                                                        if (result.isConfirmed) {
-                                                            handleDeleteEmployee(empleado.idUsuario)
-                                                        }
-                                                    }); 
-                                                    
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            >
-                                                <Trash size={20} className="mr-2"/>
-                                                Eliminar
-                                            </button>
-                                            : 
-                                            <button
-                                                onClick={() => {
-
-                                                    Swal.fire({
-                                                        title: "¿Desea activar el empleado?",
-                                                        showCancelButton: true,
-                                                        confirmButtonText: "Aceptar",
-                                                        cancelButtonText: "Cancelar",
-                                                        confirmButtonColor: "#1e8449",
-                                                        cancelButtonColor: "#f39c12"
-                                                        
-                                                        }).then((result) => {
-
-                                                        if (result.isConfirmed) {
-                                                            handleActivateEmployee(empleado.idUsuario);
-                                                        }
-                                                    }); 
-                                                    
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            >
-                                                <ShieldCheck size={20} className="mr-2"/>
-                                                Activar
-                                            </button>
-                                        }
+                                        <span className="font-medium text-gray-600">Tipo:</span>
+                                        <span className="ml-2 text-gray-800">{typeUser(empleado.tipo)}</span>
                                     </div>
                                 </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <button
+                                        onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
+                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                        disabled={empleado.status  === 0}
+                                    >
+                                        <Eye size={20} className="mr-2" />
+                                        Ver detalle
+                                    </button>
+                                    <button
+                                        onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
+                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                        disabled={empleado.status  === 0}
+                                    >
+                                        <Edit size={20} className="mr-2" />
+                                        Editar
+                                    </button>
+                                    {empleado.status === 1 ? 
+                                        <button
+                                            onClick={() => {
+
+                                                Swal.fire({
+                                                    title: "¿Desea eliminar el empleado?",
+                                                    showCancelButton: true,
+                                                    confirmButtonText: "Aceptar",
+                                                    cancelButtonText: "Cancelar",
+                                                    confirmButtonColor: "#1e8449",
+                                                    cancelButtonColor: "#f39c12"
+                                                    
+                                                    }).then((result) => {
+
+                                                    if (result.isConfirmed) {
+                                                        handleDeleteEmployee(empleado.idUsuario)
+                                                    }
+                                                }); 
+                                                
+                                            }}
+                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                        >
+                                            <Trash size={20} className="mr-2"/>
+                                            Eliminar
+                                        </button>
+                                        : 
+                                        <button
+                                            onClick={() => {
+
+                                                Swal.fire({
+                                                    title: "¿Desea activar el empleado?",
+                                                    showCancelButton: true,
+                                                    confirmButtonText: "Aceptar",
+                                                    cancelButtonText: "Cancelar",
+                                                    confirmButtonColor: "#1e8449",
+                                                    cancelButtonColor: "#f39c12"
+                                                    
+                                                    }).then((result) => {
+
+                                                    if (result.isConfirmed) {
+                                                        handleActivateEmployee(empleado.idUsuario);
+                                                    }
+                                                }); 
+                                                
+                                            }}
+                                            className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
+                                        >
+                                            <ShieldCheck size={20} className="mr-2"/>
+                                            Activar
+                                        </button>
+                                    }
+                                </div>
                             </div>
-                        )
+                        </div>
                     ))}
-                    {!isVisible && filteredData.length > 0 ? (
-                        filteredData.map((empleado) => (
-                            <div key={empleado.idUsuario} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${empleado.idUsuario}`)}>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{empleado.nombre} {empleado.aPaterno} {empleado.aMaterno}</h3>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-2 text-sm">
-                                        <div>
-                                            <span className="font-medium text-gray-600">Tipo:</span>
-                                            <span className="ml-2 text-gray-800">{typeUser(empleado.tipo)}</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <button
-                                            onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                            className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            disabled={empleado.status  === 0}
-                                        >
-                                            <Eye size={20} className="mr-2" />
-                                            Ver detalle
-                                        </button>
-                                        <button
-                                            onClick={() => navigate(`/EditarEmpleado/${empleado.idUsuario}`)}
-                                            className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            disabled={empleado.status  === 0}
-                                        >
-                                            <Edit size={20} className="mr-2" />
-                                            Editar
-                                        </button>
-                                        {empleado.status === 1 ? 
-                                            <button
-                                                onClick={() => {
-
-                                                    Swal.fire({
-                                                        title: "¿Desea eliminar el empleado?",
-                                                        showCancelButton: true,
-                                                        confirmButtonText: "Aceptar",
-                                                        cancelButtonText: "Cancelar",
-                                                        confirmButtonColor: "#1e8449",
-                                                        cancelButtonColor: "#f39c12"
-                                                        
-                                                        }).then((result) => {
-
-                                                        if (result.isConfirmed) {
-                                                            handleDeleteEmployee(empleado.idUsuario)
-                                                        }
-                                                    }); 
-                                                    
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-red-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            >
-                                                <Trash size={20} className="mr-2"/>
-                                                Eliminar
-                                            </button>
-                                            : 
-                                            <button
-                                                onClick={() => {
-
-                                                    Swal.fire({
-                                                        title: "¿Desea activar el empleado?",
-                                                        showCancelButton: true,
-                                                        confirmButtonText: "Aceptar",
-                                                        cancelButtonText: "Cancelar",
-                                                        confirmButtonColor: "#1e8449",
-                                                        cancelButtonColor: "#f39c12"
-                                                        
-                                                        }).then((result) => {
-
-                                                        if (result.isConfirmed) {
-                                                            handleActivateEmployee(empleado.idUsuario);
-                                                        }
-                                                    }); 
-                                                    
-                                                }}
-                                                className={`w-full cursor-pointer shadow-sm  shadow-gray-400 text-green-800 justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                            >
-                                                <ShieldCheck size={20} className="mr-2"/>
-                                                Activar
-                                            </button>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                                            
-                    ) : null}
+                   
                 </div>
             </div>
-            {totalPages > 1 && isVisible?  
+            {data?.getEmployeesPaginated?.total > 1 ?  
                 <div className="hidden sm:flex justify-center items-center mt-16">
-                    {Array.from({ length: totalPages }).map((_, index) => (
+                    {Array.from({ length: Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) }).map((_, index) => (
                         <button
                             key={index}
                             onClick={() => setCurrentPage(index + 1)}
@@ -580,7 +383,7 @@ const EmployeesList = () => {
                 : 
                 null
             }
-            {totalPages > 1 && isVisible ? 
+            {Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) > 1  ? 
                 <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">
                     <button className={`${currentPage !== 1 ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
                     onClick={()=>{
@@ -590,10 +393,10 @@ const EmployeesList = () => {
                     }}>
                         Anterior
                     </button>
-                    <button className={`${currentPage < totalPages  ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
+                    <button className={`${currentPage < data?.getEmployeesPaginated?.total  ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}
                     onClick={()=>{
                         
-                        if(currentPage < totalPages){
+                        if(currentPage < data?.getEmployeesPaginated?.total){
                             setCurrentPage(currentPage + 1);
                         }
                     }}>

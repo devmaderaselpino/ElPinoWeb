@@ -1,6 +1,6 @@
 import { useState, useContext } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Menu, X, Home, ShoppingCart, CreditCard, Users, Package, UserCheck, MapPin, LogOut, DollarSignIcon, HandCoins } from "lucide-react"
+import { Menu, X, Home, ShoppingCart, CreditCard, Users, Package, UserCheck, MapPin, LogOut, DollarSignIcon, HandCoins, MapIcon } from "lucide-react"
 import logo from "../../../assets/logo3.png"
 import { AuthContext } from "../../../context/AuthContext";
 
@@ -14,6 +14,7 @@ const navigation = [
     { name: "Historial Abonos", href: "/#", icon: HandCoins },
     { name: "Historial Ventas", href: "/#", icon: DollarSignIcon },
     { name: "Ubicaciones", href: "/Ubicaciones", icon: MapPin },
+    { name: "Enrutado", href: "/Enrutado", icon: MapIcon },
     { name: "Cerrar sesión", href: "#", icon: LogOut }
 ]
 

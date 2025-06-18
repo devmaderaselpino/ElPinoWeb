@@ -121,7 +121,7 @@ const ClientDetails = () => {
     
 
     return(
-        <div className="md:pl-64 lg:pl-64 mt-10">
+        <div className="mt-10">
             <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-md w-full mx-auto transition-all duration-300 hover:shadow-lg">
                 <div className="bg-gray-600 p-6 flex items-center">
                     <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 border-4 border-white overflow-hidden">

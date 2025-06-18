@@ -56,25 +56,10 @@ const ClientsList = () => {
     const [colonia, setColonia] = useState(0);
     const [municipio, setMunicipio] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
-    const [filteredData, setFilteredData] = useState([]);
-    const [isVisible, setIsVisible] = useState(true);
-
-    const itemsPerPage = 10;
+   
+    const itemsPerPage = 2;
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
-
-
-    // const { loading: loadingClients, error: errorClients, data: dataClients } = useQuery(CLIENTS_LIST, {
-    //     variables: {
-    //         input: {
-    //             idMunicipio: parseInt(municipio),
-    //             idColonia: parseInt(colonia),
-    //             skip,
-    //             limit: itemsPerPage,
-    //             searchName: "Isaac"
-    //         }
-    //     }, fetchPolicy: "network-only"
-    // });
 
     const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:"network-only"});
     
@@ -90,22 +75,23 @@ const ClientsList = () => {
         loadClients({
             variables: {
                 input: {
-                    idMunicipio: municipio,
-                    idColonia: colonia,
+                    idMunicipio: parseInt(municipio),
+                    idColonia: parseInt(colonia),
                     skip,
                     limit: itemsPerPage,
                     searchName: searchTerm,
                 },
             },
         });
-    }, []);
+    }, [municipio, colonia, currentPage]);
 
-    const fetchClients = () => {
+    const fetchClients = async () => {
+        
         loadClients({
             variables: {
                 input: {
-                    idMunicipio: municipio,
-                    idColonia: colonia,
+                    idMunicipio: parseInt(municipio),
+                    idColonia: parseInt(colonia),
                     skip,
                     limit: itemsPerPage,
                     searchName: searchTerm,
@@ -124,6 +110,8 @@ const ClientsList = () => {
     }
 
     if(errorClients || errorColonias || errorMunicipios) {
+        console.log(errorClients);
+        
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
@@ -131,7 +119,6 @@ const ClientsList = () => {
         setColonia(0);
         setMunicipio(0);
         setSearchTerm("");
-        fetchClients();
     }
 
     const { total, items } = dataClients.getClientsPaginated;
@@ -150,7 +137,6 @@ const ClientsList = () => {
                     <UserRoundPlus size={20} />
                     Agregar Cliente
                 </button>
-                <button onClick={fetchClients}>Buscar</button>
             </div>
             <div className="bg-white mb-6 w-9/10">
                 <div className="flex items-center gap-2 mb-4">
@@ -164,7 +150,7 @@ const ClientsList = () => {
                         </label>
                         <select
                             value={municipio}
-                            onChange={(e) => {setMunicipio(e.target.value); setCurrentPage(1);}}
+                            onChange={(e) => {setMunicipio(e.target.value);}}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataMunicipios.getMunicipios.map((municipio) => (
@@ -180,7 +166,7 @@ const ClientsList = () => {
                         </label>
                         <select
                             value={colonia}
-                            onChange={(e) => {setColonia(e.target.value); setCurrentPage(1);}}
+                            onChange={(e) => {setColonia(e.target.value);}}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 h-11"
                         >
                             {dataColonias.getColonias.map((colonia) => (
@@ -208,6 +194,7 @@ const ClientsList = () => {
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 fetchClients();
+                                setCurrentPage(1);
                             }
                         }}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -216,7 +203,7 @@ const ClientsList = () => {
                 </div>
             </div>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden w-9/10">
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block overflow-x-auto min-h-120">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
@@ -236,100 +223,53 @@ const ClientsList = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {items.map((client) => (
-                                isVisible && (
-                                    <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.municipio_n}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.colonia_n}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
-                                        </td>
-                                    </tr>
-                                )
+                                
+                                <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-600">{client.municipio_n}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-600">{client.colonia_n}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
+                                    </td>
+                                </tr>
+                                
                             ))}
-                            {!isVisible && filteredData.length > 0 ? (
-                                filteredData.map((client) => (
-                                    <tr key={client.idCliente} className="hover:bg-gray-50 transition-colors duration-150" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno} </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.municipio_n}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.colonia_n}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-600">{client.calle} #{client.numero_ext}</div>
-                                        </td>
-                                    </tr>
-                                ))
-                                                    
-                            ) : null}
                         </tbody>
                     </table>
                 </div>
                 <div className="md:hidden">
                     {items.map((client) => (
-                        isVisible && (
-                            <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                                <div className="space-y-3">
+                        <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
+                            <div className="space-y-3">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 text-sm">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
+                                        <span className="font-medium text-gray-600">Municipio:</span>
+                                        <span className="ml-2 text-gray-800">{client.municipio_n}</span>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-2 text-sm">
-                                        <div>
-                                            <span className="font-medium text-gray-600">Municipio:</span>
-                                            <span className="ml-2 text-gray-800">{client.municipio_n}</span>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-600">Colonia:</span>
-                                            <span className="ml-2 text-gray-800">{client.colonia_n}</span>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-600">Calle:</span>
-                                            <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
-                                        </div>
+                                    <div>
+                                        <span className="font-medium text-gray-600">Colonia:</span>
+                                        <span className="ml-2 text-gray-800">{client.colonia_n}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-600">Calle:</span>
+                                        <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
                                     </div>
                                 </div>
                             </div>
-                        )
+                        </div>
                     ))}
-                    {!isVisible && filteredData.length > 0 ? (
-                        filteredData.map((client) => (
-                            <div key={client.idCliente} className="p-6 border-b border-gray-200 last:border-b-0" onClick={() => navigate(`/DetalleClientes/${client.idCliente}`)}>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{client.nombre} {client.aPaterno} {client.aMaterno}</h3>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-2 text-sm">
-                                        <div>
-                                            <span className="font-medium text-gray-600">Municipio:</span>
-                                            <span className="ml-2 text-gray-800">{client.municipio_n}</span>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-600">Colonia:</span>
-                                            <span className="ml-2 text-gray-800">{client.colonia_n}</span>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-600">Calle:</span>
-                                            <span className="ml-2 text-gray-800">{client.calle} #{client.numero_ext}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                                            
-                    ) : null}
                 </div>
             </div>
-            {totalPages > 1 && isVisible?  
+            {totalPages > 1 ?  
                 <div className="hidden sm:flex justify-center items-center mt-16">
                     {Array.from({ length: totalPages }).map((_, index) => (
                         <button
