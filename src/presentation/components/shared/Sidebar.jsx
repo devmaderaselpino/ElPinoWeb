@@ -6,7 +6,7 @@ import { AuthContext } from "../../../context/AuthContext";
 
 const navigation = [
     { name: "Inicio", href: "/", icon: Home},
-    { name: "Venta", href: "/#", icon: ShoppingCart },
+    { name: "Venta", href: "/Venta", icon: ShoppingCart },
     { name: "Tarjetas", href: "/#", icon: CreditCard },
     { name: "Empleados", href: "/ListaEmpleados", icon: Users },
     { name: "Inventario", href: "/#", icon: Package },

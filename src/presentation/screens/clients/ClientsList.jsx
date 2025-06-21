@@ -57,7 +57,7 @@ const ClientsList = () => {
     const [municipio, setMunicipio] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
    
-    const itemsPerPage = 2;
+    const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 

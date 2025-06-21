@@ -205,12 +205,8 @@ export default function Dashboard() {
                                 </ResponsiveContainer>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                                    <h4 className="font-semibold text-gray-800 mb-1">Inventario Mínimo</h4>
-                                    <div className="text-2xl font-bold text-gray-700">{data.getPendingInventory[0].value + data.getPendingInventory[1].value}</div>
-                                    <p className="text-sm text-gray-600">unidades</p>
-                                </div>
+                            <div className="space-y-4  flex flex-col justify-center">
+                                
                                 {data.getPendingInventory.map((item, index) => (
                                     <div key={index} className="border border-gray-200 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-2">

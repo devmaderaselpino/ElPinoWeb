@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react"
 import { gql, useMutation } from '@apollo/client';
 import { EyeIcon, EyeOffIcon } from "lucide-react"
 import Loading from "../../components/shared/Loading";
-import logo from '../../../assets/logo-2.png';
+import logo from '../../../assets/logo3.png';
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 

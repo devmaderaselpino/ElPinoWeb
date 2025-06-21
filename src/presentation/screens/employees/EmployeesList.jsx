@@ -41,7 +41,7 @@ const EmployeesList = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
    
-    const itemsPerPage = 2;
+    const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 
@@ -364,7 +364,7 @@ const EmployeesList = () => {
                    
                 </div>
             </div>
-            {data?.getEmployeesPaginated?.total > 1 ?  
+            {Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) > 1?  
                 <div className="hidden sm:flex justify-center items-center mt-16">
                     {Array.from({ length: Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) }).map((_, index) => (
                         <button

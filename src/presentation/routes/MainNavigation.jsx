@@ -17,6 +17,7 @@ import EmployeesList from "../screens/employees/EmployeesList"
 import NewEmployeeForm from "../screens/employees/NewEmployeeForm"
 import EditEmployee from "../screens/employees/EditEmployee"
 import EmployeeDetails from "../screens/employees/EmployeeDetails"
+import SellProcess from "../screens/sales/SellProcess"
 
 const MainNavigation = () => {
     const location = useLocation();
@@ -45,6 +46,7 @@ const MainNavigation = () => {
                         <Route path="/AgregarEmpleado" element={<NewEmployeeForm />} />
                         <Route path="/EditarEmpleado/:idUsuario" element={<EditEmployee />} />
                         <Route path="/DetalleEmpleado/:idUsuario" element={<EmployeeDetails />} />
+                        <Route path="/Venta" element={<SellProcess />} />
                     </Route>
                 </Routes>
             </div>
