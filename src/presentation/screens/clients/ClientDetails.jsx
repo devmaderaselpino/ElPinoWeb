@@ -122,7 +122,7 @@ const ClientDetails = () => {
 
     return(
         <div className="mt-10">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-md w-full mx-auto transition-all duration-300 hover:shadow-lg">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10">
                 <div className="bg-gray-600 p-6 flex items-center">
                     <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 border-4 border-white overflow-hidden">
                         <div className="h-full w-full flex items-center justify-center bg-green-100 text-black text-2xl font-bold">
@@ -140,7 +140,7 @@ const ClientDetails = () => {
                 </div>
                 <div className="p-6">
                     <div className="mb-6">
-                        <h3 className="text-sm uppercase text-gray-800 font-medium mb-3 border-b pb-2">Información de Contacto</h3>     
+                        <h3 className="text-sm uppercase text-gray-800 font-medium mb-3 pb-2">Información de Contacto</h3>     
                         <div className="space-y-3">
                             <div className="flex items-start">
                                 <Phone size={18} className="text-green-800 mr-3 mt-0.5 flex-shrink-0" />
@@ -158,7 +158,7 @@ const ClientDetails = () => {
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-sm uppercase text-gray-500 font-medium mb-3 border-b pb-2">Detalles del Cliente</h3>
+                        <h3 className="text-sm uppercase text-gray-500 font-medium mb-3 pb-2">Detalles del Cliente</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-center">
                                 <User size={18} className="text-green-800 mr-2 flex-shrink-0" />
@@ -200,7 +200,7 @@ const ClientDetails = () => {
                         </div>
                     </div>
                 </div>
-                <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t">
+                <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t border-gray-100">
                     <button onClick={ ()=> { navigate(`/EditarCliente/${dataClient.getClient.idCliente}`)} } className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
                         <Edit size={18} />
                     </button>

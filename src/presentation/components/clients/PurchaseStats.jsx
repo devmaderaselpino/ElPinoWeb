@@ -26,7 +26,7 @@ const PurchaseStats = ({ purchases }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {stats.map((stat, index) => (
-                <div key={index} className="rounded-lg   shadow-lg border-0 bg-white/70 backdrop-blur-sm hover:shadow-xl transition-all duration-300 p-6">
+                <div key={index} className="rounded-lg   shadow-sm border-0 bg-white/70 p-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-2">
                             <p className="text-slate-600 text-sm font-medium">{stat.title}</p>

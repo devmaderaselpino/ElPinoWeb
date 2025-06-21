@@ -225,9 +225,9 @@ export default function SellProcess() {
             const resp = await insertVenta({
                 variables: {
                     input: {
-                        total: getTotalAmount() - enganche,
+                        total: getTotalAmount(),
                         usuario_reg: 70,
-                        idCliente: 1,
+                        idCliente: selectedClient,
                         fecha: "2025-06-19 12:39:00",
                         tipo: paymentPlan,
                         productos: products,
