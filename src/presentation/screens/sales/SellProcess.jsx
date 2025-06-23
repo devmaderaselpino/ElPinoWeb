@@ -3,9 +3,10 @@ import React from "react";
 import { useQuery, gql, useLazyQuery, useMutation } from '@apollo/client';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
-import { MapPinned, Filter } from "lucide-react";
+import { MapPinned, Filter, ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import formatPrice from "../../../functions/FormatPrice";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const INSERT_SALE = gql`
     mutation InsertSale($input: NewSale) {
@@ -61,6 +62,9 @@ const PRODUCT_LIST = gql`
 `;
 
 export default function SellProcess() {
+
+    const navigate = useNavigate();
+
     const [currentStep, setCurrentStep] = useState(1)
     const [selectedClient, setSelectedClient] = useState("")
     const [cart, setCart] = useState([])
@@ -171,7 +175,6 @@ export default function SellProcess() {
     const nextStep = () => {
         if(currentStep === 2 && !isPremium ){
             const totalCompra = getTotalAmount();
-            setEnganche(Math.ceil(totalCompra * .10));
             setEngancheMin(Math.ceil(totalCompra * .10));
         }
         if (currentStep < 4) {
@@ -204,12 +207,8 @@ export default function SellProcess() {
 
     const prevStep = () => {
         if (currentStep > 1){
-            if(currentStep === 4 && !isPremium){
-                const totalCompra = getTotalAmount();
-                setEnganche(Math.ceil(totalCompra * .10));
-                setEngancheMin(Math.ceil(totalCompra * .10));
-            }
-            setCurrentStep(currentStep - 1)
+            setCurrentStep(currentStep - 1);
+            
         }   
     }
 
@@ -237,7 +236,19 @@ export default function SellProcess() {
                 }
             });
 
-            console.log(resp);
+            if(resp.data.insertSale === "Venta realizada."){
+                Swal.fire({
+                    title: "Venta agregada con éxito!",
+                    text: "Serás redirigido a la lista de clientes.",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/ListaClientes`)
+                    }
+                }); 
+            }
             
         } catch (error) {
             console.log(error);
@@ -381,11 +392,11 @@ export default function SellProcess() {
                                 >
                                 {dataProducts.getProducts.map((product) => (
                                     <div key={product.idProducto} className="w-full flex-shrink-0">
-                                        <div className="bg-gray-50 p-6 rounded-lg text-center">
+                                        <div className="p-6 rounded-lg text-center">
                                             <img
-                                            src={product.img_producto || "/placeholder.svg"}
-                                            alt={product.descripcion}
-                                            className="w-48 h-48 mx-auto mb-4 object-cover rounded"
+                                                src={product.img_producto || "/placeholder.svg"}
+                                                alt={product.descripcion}
+                                                className="w-48 h-48 mx-auto mb-4 object-cover rounded"
                                             />
                                             <h3 className="text-xl font-semibold mb-2">{product.descripcion}</h3>
                                             <p>Stock: {product.stock}</p>
@@ -400,18 +411,18 @@ export default function SellProcess() {
                             <button
                                 onClick={() => setCurrentProductIndex(Math.max(0, currentProductIndex - 1))}
                                 disabled={currentProductIndex === 0}
-                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-lg disabled:opacity-50"
+                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md disabled:opacity-50"
                             >
-                                ←
+                                <ArrowLeft className="h-5 w-5 text-gray-700" />
                             </button>
                             <button
                                 onClick={() =>
-                                setCurrentProductIndex(Math.min(dataProducts.getProducts.length - 1, currentProductIndex + 1))
+                                    setCurrentProductIndex(Math.min(dataProducts.getProducts.length - 1, currentProductIndex + 1))
                                 }
                                 disabled={currentProductIndex === dataProducts.getProducts.length - 1}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-lg disabled:opacity-50"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md disabled:opacity-50"
                             >
-                                →
+                                <ArrowRight className="h-5 w-5 text-gray-700" />
                             </button>
                         </div>
 
@@ -432,7 +443,7 @@ export default function SellProcess() {
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold">{formatPrice(item.precio * item.quantity)}</span>
                                             <button onClick={() => removeFromCart(item.idProducto)} className="text-red-500 hover:text-red-700">
-                                                ✕
+                                                <Trash2 className="h-5 w-5 text-red-700" />
                                             </button>
                                         </div>
                                     </div>

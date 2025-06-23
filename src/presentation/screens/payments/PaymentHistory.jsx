@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react'; 
+import { useQuery, gql } from '@apollo/client';
+import { startOfWeek, endOfWeek, format, parseISO, isAfter, isBefore, isEqual } from 'date-fns';
+import { PaymentFilters } from '../../components/payments/PaymentFilters';
+import { PaymentTable } from '../../components/payments/PaymentTable';
+import { PaymentSummary } from '../../components/payments/PaymentSummary';
+import { HandCoins } from 'lucide-react';
+
+const GET_ABONOS = gql`
+    query GetAbonos {
+        GetAbonos {
+            fecha
+            cliente
+            abono
+            tipo_abono
+            cobrador
+        }
+    }
+`;
+
+const HistorialAbonos = () => {
+    const { data, loading, error } = useQuery(GET_ABONOS);
+    const abonos = data?.GetAbonos || [];
+
+    const now = new Date();
+    const inicioSemana = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const finSemana = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedClient, setSelectedClient] = useState('');
+    const [startDate, setStartDate] = useState(inicioSemana);
+    const [endDate, setEndDate] = useState(finSemana);
+    const [filteredPayments, setFilteredPayments] = useState([]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    useEffect(() => {
+        const filtered = abonos.filter(p => {
+            const fechaPago = parseISO(p.fecha);
+
+            const matchesSearch = [p.cliente, p.tipo_abono, p.cobrador]
+                .some(field => field?.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            const matchesClient = !selectedClient || p.cliente === selectedClient;
+
+            const matchesDate =
+                (!startDate || isAfter(fechaPago, parseISO(startDate)) || isEqual(fechaPago, parseISO(startDate))) &&
+                (!endDate || isBefore(fechaPago, parseISO(endDate)) || isEqual(fechaPago, parseISO(endDate)));
+
+            return matchesSearch && matchesClient && matchesDate;
+        });
+
+        setFilteredPayments(filtered);
+        setCurrentPage(1);
+    }, [abonos, searchQuery, selectedClient, startDate, endDate]);
+
+    if (loading) return <div className="p-4">Cargando abonos...</div>;
+    if (error) return <div className="p-4 text-red-600">Error al cargar abonos</div>;
+
+    const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+    const paginatedPayments = filteredPayments.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    return (
+        <div className="container mx-auto px-4 py-8 max-w-7x">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+                    <HandCoins className="h-7 w-7 mr-3 text-primary-600" />
+                    Historial de Abonos
+                </h1>
+            
+            </div>
+
+            <PaymentSummary payments={filteredPayments} />
+
+            <div className="bg-white rounded-lg shadow-card">
+                <div className="p-6 border-b border-gray-200">
+                    <PaymentFilters
+                        payments={abonos}
+                        filteredPayments={filteredPayments}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        selectedClient={selectedClient}
+                        setSelectedClient={setSelectedClient}
+                        startDate={startDate}
+                        endDate={endDate}
+                        setDateRange={(start, end) => {
+                            setStartDate(start);
+                            setEndDate(end);
+                        }}
+                    />
+                </div>
+
+                <PaymentTable payments={paginatedPayments} />
+
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center py-4 space-x-4 border-t border-gray-100">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        >
+                            Anterior
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default HistorialAbonos;

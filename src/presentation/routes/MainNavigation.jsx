@@ -18,6 +18,8 @@ import NewEmployeeForm from "../screens/employees/NewEmployeeForm"
 import EditEmployee from "../screens/employees/EditEmployee"
 import EmployeeDetails from "../screens/employees/EmployeeDetails"
 import SellProcess from "../screens/sales/SellProcess"
+import HistorialAbonos  from "../screens/payments/PaymentHistory"
+import SalesHistory from "../screens/sales/SalesHistory"
 
 const MainNavigation = () => {
     const location = useLocation();
@@ -47,6 +49,8 @@ const MainNavigation = () => {
                         <Route path="/EditarEmpleado/:idUsuario" element={<EditEmployee />} />
                         <Route path="/DetalleEmpleado/:idUsuario" element={<EmployeeDetails />} />
                         <Route path="/Venta" element={<SellProcess />} />
+                        <Route path="/Abonos" element={<HistorialAbonos />} />
+                        <Route path="/Ventas" element={<SalesHistory />} />
                     </Route>
                 </Routes>
             </div>

@@ -11,8 +11,8 @@ const navigation = [
     { name: "Empleados", href: "/ListaEmpleados", icon: Users },
     { name: "Inventario", href: "/#", icon: Package },
     { name: "Clientes", href: "/ListaClientes", icon: UserCheck },
-    { name: "Historial Abonos", href: "/#", icon: HandCoins },
-    { name: "Historial Ventas", href: "/#", icon: DollarSignIcon },
+    { name: "Historial Abonos", href: "/Abonos", icon: HandCoins },
+    { name: "Historial Ventas", href: "/Ventas", icon: DollarSignIcon },
     { name: "Ubicaciones", href: "/Ubicaciones", icon: MapPin },
     { name: "Enrutado", href: "/Enrutado", icon: MapIcon },
     { name: "Cerrar sesión", href: "#", icon: LogOut }
