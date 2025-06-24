@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useMutation } from '@apollo/client';
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 import formatPrice from "../../../functions/FormatPrice";
+import Swal from "sweetalert2";
 
 const SALE_INFO = gql`
     query GetTotalsBySale($idVenta: Int) {
@@ -15,11 +16,23 @@ const SALE_INFO = gql`
     }
 `;
 
+const INSERT_PAY = gql`
+    mutation InsertPayment($abono: Float, $idVenta: Int) {
+        insertPayment(abono: $abono, idVenta: $idVenta)
+    }
+`;
+
 export default function PaymentForm() {
+    
+    const navigate = useNavigate();
 
     const {idVenta} = useParams();
     
     const [paymentAmount, setPaymentAmount] = useState("");
+    
+    const [errorAbono, setErrorAbono] = useState(false);
+
+    const [insertPayment, { loading: loadingInsert }] = useMutation(INSERT_PAY);
 
     const { loading, error, data } = useQuery(SALE_INFO, {
         variables: {
@@ -27,11 +40,58 @@ export default function PaymentForm() {
         }, fetchPolicy:"network-only"
     });
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if(parseFloat(paymentAmount) > data.getTotalsBySale.pendiente){
+            Swal.fire({
+                title: "¡El abono no debe ser mayor al total!",
+                text: "",
+                icon: "warning",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#f39c12",
+            });
+            return;
+        }
+
+        try {
+            const resp = await insertPayment({
+                variables: {
+                    idVenta: parseInt(idVenta),
+                    abono: parseFloat(paymentAmount)
+                }
+            });
+
+            console.log(resp);
+            if(resp.data.insertPayment === "Abono realizado con éxito."){
+
+                Swal.fire({
+                    title: "¡Abono realizado con éxito!",
+                    text: "Serás redirigido a la tabla de apgos.",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/TablaPagos/${idVenta}`);
+                    }
+                }); 
+            }
+
+        } catch (error) {
+            
+        }
     }
 
-    if(loading){
+    const validateInput = (value, setError) => {
+        if( !value || value === 0 || value === "0") {
+            setError(true);
+        }else{
+            setError(false);
+        }
+    }
+
+    if(loading || loadingInsert){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -93,6 +153,7 @@ export default function PaymentForm() {
                                     type="text"
                                     id="amount"
                                     value={paymentAmount}
+                                    onBlur={ () => {validateInput(paymentAmount, setErrorAbono)} }
                                     onChange={(e) => {
                                         const onlyNums = e.target.value.replace(/\D/g, "");
                                         setPaymentAmount(onlyNums);
@@ -100,6 +161,7 @@ export default function PaymentForm() {
                                     placeholder="0.00"
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-green-700 text-lg"
                                 />
+                                {errorAbono ? <span className="text-red-700">Campo obligatorio.</span> : null}   
                             </div>
                         </div>
 

@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import Loading from '../../components/shared/Loading';
 import ErrorPage from '../../components/shared/ErrorPage';
 import formatPrice from '../../../functions/FormatPrice';
-import { format } from '@formkit/tempo';
+import { format, isAfter } from '@formkit/tempo';
+import { isBefore } from 'date-fns';
 
 const PAYMENT_TABLE = gql`
     query GetPaymentsBySale($idVenta: Int) {
@@ -29,12 +30,22 @@ export default function PaymentTable() {
         }, fetchPolicy:"network-only"
     });
 
-    const getEstado = (pagado) => {
+    const getEstado = (pagado, fecha) => {
+        
+        if(pagado === 0 && isBefore(fecha, new Date())){
+            return "Vencido";
+        }
+
         return pagado === 0 ? "Pendiente" : "Completado"
     }
 
-    const getEstadoColor = (pagado) => {
-        return pagado === 0 ? "text-red-600 bg-red-100" : "text-green-600 bg-green-100"
+    const getEstadoColor = (pagado, fecha) => {
+
+        if(pagado === 0 && isBefore(fecha, new Date())){
+            return "text-red-600 bg-red-100";
+        }
+
+        return pagado === 0 ? "text-orange-600 bg-orange-100" : "text-green-600 bg-green-100"
     }
 
     if(loading){
@@ -96,9 +107,9 @@ export default function PaymentTable() {
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                                     <span
-                                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(payment.pagado)}`}
+                                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(payment.pagado, payment.fecha_programada)}`}
                                     >
-                                        {getEstado(payment.pagado)}
+                                        {getEstado(payment.pagado, payment.fecha_programada)}
                                     </span>
                                 </td>
                             </tr>
