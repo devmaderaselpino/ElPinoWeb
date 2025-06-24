@@ -43,8 +43,6 @@ const SALES_LIST = gql`
         getSalesByClient(input: $input) {
             idVenta
             total
-            subtotal
-            interes
             fecha
             usuario_reg
             idCliente

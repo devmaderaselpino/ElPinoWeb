@@ -1,8 +1,9 @@
 
-import { Package, Eye } from 'lucide-react';
+import { Package, Eye, HandCoins } from 'lucide-react';
 import { useState } from 'react';
 import formatPrice from '../../../functions/FormatPrice';
 import { format } from "@formkit/tempo";
+import { useNavigate } from 'react-router-dom';
 
 const statusColors = {
     0: 'bg-green-100 text-green-800 border-green-200',
@@ -17,6 +18,8 @@ const statusIcons = {
 };
 
 const PurchaseItem = ({ purchase }) => {
+
+    const navigate = useNavigate();
     
     const [expanded, setExpanded] = useState(false);
 
@@ -44,9 +47,7 @@ const PurchaseItem = ({ purchase }) => {
 
             <div className="p-6 pt-0">
                 <div className="space-y-4">
-                    
-
-                    <div className="flex">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3">
                         <button
                             onClick={() => setExpanded(!expanded)}
                             className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
@@ -54,8 +55,25 @@ const PurchaseItem = ({ purchase }) => {
                             <Eye className="h-4 w-4" />
                             {expanded ? 'Ocultar detalle' : 'Ver detalle'}
                         </button>
+                        {purchase.status === 1 ? 
+                            <button
+                                onClick={() => navigate(`/TablaPagos/${purchase.idVenta}`)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <Eye className="h-4 w-4" />
+                                Tabla de pagos
+                            </button>
+                        : null}
+                        {purchase.status === 1 ? 
+                            <button
+                                onClick={() => navigate(`/AplicarAbono/${purchase.idVenta}`)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <HandCoins className="h-4 w-4" />
+                                Abonar
+                            </button>
+                        : null}
                     </div>
-
                     {expanded && (
                         <div className="mt-4 pt-4 border-t border-slate-200">
                             <h4 className="font-semibold text-slate-800 mb-3">Productos</h4>

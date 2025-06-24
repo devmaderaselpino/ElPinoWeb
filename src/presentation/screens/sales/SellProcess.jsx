@@ -214,6 +214,16 @@ export default function SellProcess() {
 
     const handleSubmit = async () => {
 
+        let tipoCompra = paymentPlan;
+
+        if(paymentPlan === 6){
+            tipoCompra = 2;
+        }
+
+        if(paymentPlan === 12){
+            tipoCompra = 3;
+        }
+
         const products = cart.map((product) => ({
             idProducto: product.idProducto,
             cantidad: product.quantity,
@@ -228,7 +238,7 @@ export default function SellProcess() {
                         usuario_reg: 70,
                         idCliente: selectedClient,
                         fecha: "2025-06-19 12:39:00",
-                        tipo: paymentPlan,
+                        tipo: tipoCompra,
                         productos: products,
                         abono: parseFloat(enganche),
                         municipio
