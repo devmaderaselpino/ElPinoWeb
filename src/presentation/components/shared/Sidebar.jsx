@@ -9,7 +9,7 @@ const navigation = [
     { name: "Venta", href: "/Venta", icon: ShoppingCart },
     { name: "Tarjetas", href: "/#", icon: CreditCard },
     { name: "Empleados", href: "/ListaEmpleados", icon: Users },
-    { name: "Inventario", href: "/#", icon: Package },
+    { name: "Inventario", href: "/Inventario", icon: Package },
     { name: "Clientes", href: "/ListaClientes", icon: UserCheck },
     { name: "Historial Abonos", href: "/Abonos", icon: HandCoins },
     { name: "Historial Ventas", href: "/Ventas", icon: DollarSignIcon },

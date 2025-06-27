@@ -1,0 +1,121 @@
+import React, { useState } from 'react';
+import { X, Plus, Minus, MapPin } from 'lucide-react';
+
+const StockAdjustment = ({ product, onAdjust, onClose }) => {
+    const [adjustments, setAdjustments] = useState({ rosario: '', escuinapa: '' });
+    const [tab, setTab] = useState('rosario');
+
+    const handleAdjustment = (location) => {
+        const adjustment = parseInt(adjustments[location]);
+        if (!isNaN(adjustment) && adjustment !== 0) {
+            onAdjust(product.id, location, adjustment);
+            setAdjustments(prev => ({ ...prev, [location]: '' }));
+            setNotes(prev => ({ ...prev, [location]: '' }));
+        }
+    };
+
+    const getNewStock = (location) => {
+        const currentStock = location === 'rosario' ? product.stock_rosario : product.stock_escuinapa;
+        const adjustment = parseInt(adjustments[location]) || 0;
+        return Math.max(0, currentStock + adjustment);
+    };
+
+    const quickAdjustment = (location, value) => {
+        setAdjustments(prev => ({ ...prev, [location]: value.toString() }));
+    };
+
+    return (
+        <div className="fixed inset-0 backdrop-blur-sm bg-transparent flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-xl h-[69vh] flex flex-col overflow-hidden">
+              
+                <div className="flex justify-between items-center px-6 py-4 shrink-0">
+                    <div className="flex items-center gap-2 text-xl font-semibold">
+                        <MapPin className="h-5 w-5 text-green-800" />
+                        Ajustar Stock
+                    </div>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+               
+                <div className="p-6 overflow-y-auto grow">
+                    
+                    <div className="mb-6 bg-white p-4 rounded">
+                        <h3 className="font-semibold text-2xl">{product.descripcion}</h3>
+                        <div className="mt-2 flex items-center gap-2">
+                            <p className="text-md">Categoria:</p>
+                            <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">{product.categoria}</span>
+                        </div>
+                    </div>
+
+                    
+                    <div className="flex mb-4 gap-2">
+                        <button onClick={() => setTab('rosario')} className={`w-full py-2 rounded ${tab === 'rosario' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>Rosario</button>
+                        <button onClick={() => setTab('escuinapa')} className={`w-full py-2 rounded ${tab === 'escuinapa' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>Escuinapa</button>
+                    </div>
+
+                    {['rosario', 'escuinapa'].map((location) => (
+                        tab === location && (
+                            <div key={location} className="space-y-4">
+                                <div className={`grid grid-cols-2 gap-4 p-4 ${location === 'rosario' ? 'bg-green-50' : 'bg-blue-50'} rounded`}>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Stock Actual</p>
+                                        <p className={`text-2xl font-bold ${location === 'rosario' ? 'text-green-700' : 'text-blue-700'}`}>
+                                            {location === 'rosario' ? product.stock_rosario : product.stock_escuinapa}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Stock Mínimo</p>
+                                        <p className="text-lg font-semibold">
+                                            {location === 'rosario' ? product.min_stock_rosario : product.min_stock_escuinapa}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-center">
+                                    <label className="block text-sm font-medium">Ajuste de Inventario</label>
+                                    <div className="flex justify-center gap-2">
+                                        <button onClick={() => quickAdjustment(location, -10)} className="px-2 py-1 text-sm border rounded text-red-600 hover:bg-red-100">
+                                            <Minus className="h-6 w-6 inline-block" /> -10
+                                        </button>
+                                        <button onClick={() => quickAdjustment(location, -1)} className="px-2 py-1 text-sm border rounded text-red-600 hover:bg-red-100">
+                                            <Minus className="h-6 w-6 inline-block" /> -1
+                                        </button>
+                                        <input
+                                            type="number"
+                                            className="w-50 text-center border rounded"
+                                            value={adjustments[location]}
+                                            onChange={(e) => setAdjustments(prev => ({ ...prev, [location]: e.target.value }))}
+                                            placeholder="0"
+                                        />
+                                        <button onClick={() => quickAdjustment(location, 1)} className="px-2 py-1 text-sm border rounded text-green-600 hover:bg-green-100">
+                                            <Plus className="hh-6 w-6 inline-block" /> +1
+                                        </button>
+                                        <button onClick={() => quickAdjustment(location, 10)} className="px-2 py-1 text-sm border rounded text-green-600 hover:bg-green-100">
+                                            <Plus className="h-6 w-6 inline-block" /> +10
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleAdjustment(location)}
+                                    disabled={!adjustments[location] || parseInt(adjustments[location]) === 0}
+                                    className={`w-full h-12 py-2 rounded text-white ${location === 'rosario' ? 'bg-green-600 hover:bg-green-800' : 'bg-blue-600 hover:bg-blue-800'}`}
+                                >
+                                    Aplicar Ajuste en {location === 'rosario' ? 'Rosario' : 'Escuinapa'}
+                                </button>
+                            </div>
+                        )
+                    ))}
+                </div>
+
+                <div className="flex justify-end px-6 py-4 t shrink-0">
+                    <button onClick={onClose} className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default StockAdjustment;
