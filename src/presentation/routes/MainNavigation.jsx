@@ -22,6 +22,7 @@ import HistorialAbonos  from "../screens/payments/PaymentHistory"
 import SalesHistory from "../screens/sales/SalesHistory"
 import PaymentTable from "../screens/payments/PaymentTableBySale"
 import PaymentForm from "../screens/payments/PaymentForm"
+import Inventario from "../screens/inventory/Inventory"
 
 const MainNavigation = () => {
     const location = useLocation();
@@ -52,6 +53,7 @@ const MainNavigation = () => {
                         <Route path="/DetalleEmpleado/:idUsuario" element={<EmployeeDetails />} />
                         <Route path="/Venta" element={<SellProcess />} />
                         <Route path="/Abonos" element={<HistorialAbonos />} />
+                        <Route path="/Inventario" element={<Inventario/>} />
                         <Route path="/Ventas" element={<SalesHistory />} />
                         <Route path="/TablaPagos/:idVenta" element={<PaymentTable />} />
                         <Route path="/AplicarAbono/:idVenta" element={<PaymentForm />} />
