@@ -5,13 +5,19 @@ import { setContext } from '@apollo/client/link/context';
         uri: "http://localhost:4000/graphql",
     });
 
-    const authLink = setContext((_,{headers})=>{
-        return {
-            headers: {
-                ...headers,
-                authorization: localStorage.getItem("token")
+    const authLink = setContext(async (_,{headers}) => {
+
+        const token = localStorage.getItem("token");
+
+        if(token){
+            return {
+                headers: {
+                    ...headers,
+                    authorization: token
+                }
             }
         }
+
     })
 
     const client = new ApolloClient({
