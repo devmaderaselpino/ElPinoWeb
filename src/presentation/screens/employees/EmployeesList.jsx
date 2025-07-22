@@ -51,7 +51,7 @@ const EmployeesList = () => {
 
     const [activateEmployee, { loading: loadingActivateEmployee}] = useMutation(ACTIVATE_EMPLOYEE);
 
-     const handleActivateEmployee = async (idUsuario) => {
+    const handleActivateEmployee = async (idUsuario) => {
 
         try {
             const resp = await activateEmployee({
@@ -202,8 +202,7 @@ const EmployeesList = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <button
                                                     onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                                    disabled={empleado.status  === 0}
+                                                    className={`w-full cursor-pointer shadow-sm shadow-gray-400 text-orange-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
                                                 >
                                                     <Eye size={20} className="mr-2" />
                                                     Ver detalle
@@ -292,8 +291,7 @@ const EmployeesList = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <button
                                         onClick={() => navigate(`/DetalleEmpleado/${empleado.idUsuario}`)}
-                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400 ${empleado.status  === 0 ? "text-gray-400" : "text-orange-600"}  justify-center rounded-2xl font-semibold  flex items-center p-2`}
-                                        disabled={empleado.status  === 0}
+                                        className={`w-full cursor-pointer shadow-sm shadow-gray-400  text-orange-600 justify-center rounded-2xl font-semibold  flex items-center p-2`}
                                     >
                                         <Eye size={20} className="mr-2" />
                                         Ver detalle

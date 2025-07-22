@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, gql, useMutation } from '@apollo/client';
-import { Edit, Trash, Phone, User, MapPin } from 'lucide-react';
+import { Edit, Trash, Phone, User, MapPin, ShieldCheck } from 'lucide-react';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +33,12 @@ const DELETE_EMPLOYEE = gql`
     }
 `;
 
+const ACTIVATE_EMPLOYEE = gql`
+    mutation ActivateEmployee($idUsuario: Int) {
+        activateEmployee(idUsuario: $idUsuario)
+    }
+`;
+
 const EmployeeDetails = () => {
 
     const navigate = useNavigate();
@@ -46,6 +52,27 @@ const EmployeeDetails = () => {
     });
 
     const [deleteEmployee, { loading: loadingDeleteEmployee}] = useMutation(DELETE_EMPLOYEE);
+    const [activateEmployee, { loading: loadingActivateEmployee}] = useMutation(ACTIVATE_EMPLOYEE);
+
+    const handleActivateEmployee = async () => {
+
+        try {
+            const resp = await activateEmployee({
+                variables: {
+                    idUsuario: parseInt(idUsuario)
+                }
+            });
+
+            if(resp.data.activateEmployee === "Empleado activado"){
+                navigate("/ListaEmpleados");
+            }
+           
+        } catch (error) {
+            console.log(error);
+            
+        }
+       
+    }
 
     const handleDeleteEmployee = async () => {
 
@@ -67,7 +94,7 @@ const EmployeeDetails = () => {
        
     }
 
-    if(loading || loadingDeleteEmployee){
+    if(loading || loadingDeleteEmployee || loadingActivateEmployee){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -136,28 +163,45 @@ const EmployeeDetails = () => {
                     </div>
                 </div>
                 <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t">
-                    <button onClick={() => navigate(`/EditarEmpleado/${idUsuario}`)} className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
+                    <button onClick={() => navigate(`/EditarEmpleado/${idUsuario}`)} className={`${data.getEmployee.status === 1 ? "bg-green-700" : "bg-gray-400"} inline-flex items-center px-3 py-1 border text-white rounded-md transition-colors duration-200 text-sm`} disabled={data.getEmployee.status !== 1}>
                         <Edit size={18} />
                     </button>
                     <button className="inline-flex items-center px-3 py-1 border bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm"
                     onClick={() => {
-                        Swal.fire({
-                            title: "¿Desea eliminar el empleado?",
-                            showCancelButton: true,
-                            confirmButtonText: "Aceptar",
-                            cancelButtonText: "Cancelar",
-                            confirmButtonColor: "#1e8449",
-                            cancelButtonColor: "#f39c12"
-                            
-                            }).then((result) => {
+                        if(data.getEmployee.status === 1){
+                            Swal.fire({
+                                title: "¿Desea eliminar el empleado?",
+                                showCancelButton: true,
+                                confirmButtonText: "Aceptar",
+                                cancelButtonText: "Cancelar",
+                                confirmButtonColor: "#1e8449",
+                                cancelButtonColor: "#f39c12"
+                                
+                                }).then((result) => {
+    
+                                if (result.isConfirmed) {
+                                    handleDeleteEmployee()
+                                }
+                            }); 
+                        }else{
+                            Swal.fire({
+                                title: "¿Desea activar el empleado?",
+                                showCancelButton: true,
+                                confirmButtonText: "Aceptar",
+                                cancelButtonText: "Cancelar",
+                                confirmButtonColor: "#1e8449",
+                                cancelButtonColor: "#f39c12"
+                                
+                                }).then((result) => {
 
-                            if (result.isConfirmed) {
-                                handleDeleteEmployee()
-                            }
-                        }); 
+                                if (result.isConfirmed) {
+                                    handleActivateEmployee();
+                                }
+                            }); 
+                        }
                         
                     }}>
-                        <Trash size={18} />
+                        {data.getEmployee.status === 1 ? <Trash size={18} /> : <ShieldCheck size={18}/>}
                     </button>   
                 </div>
             </div>
