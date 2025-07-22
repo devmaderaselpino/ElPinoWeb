@@ -159,27 +159,33 @@ export default function SellProcess() {
         setCart(cart.filter((item) => item.idProducto !== productId))
     }
 
-    const getTotalAmount = () => {
+    const getTotalAmountContado = () => {
+        return Math.ceil(cart.reduce((total, item) => total + item.precio * item.quantity, 0))
+    }
 
-        return cart.reduce((total, item) => total + item.precio * item.quantity, 0)
+    const getTotalAmount = () => {
+        return Math.ceil(cart.reduce((total, item) => total + item.precio * item.quantity, 0) * 1.43)
     }
 
     const getMonthlyPayment = (months) => {
         if(months === 1){
-            return formatPrice(getTotalAmount());
+            return formatPrice(getTotalAmountContado());
         }
-        const total = getTotalAmount() - enganche
-        return formatPrice(total / months)
+        
+        const total = Math.ceil((getTotalAmount() - enganche) / months)
+        return formatPrice(total)
     }
 
     const nextStep = () => {
         if(currentStep === 2 && !isPremium ){
             const totalCompra = getTotalAmount();
             setEngancheMin(Math.ceil(totalCompra * .10));
+            setEnganche(Math.ceil(totalCompra * .10));
         }
         if (currentStep < 4) {
             if(currentStep === 3 && paymentPlan === 1){
                 setEnganche(0);
+                setEngancheMin(0);
             }
             if(currentStep === 3 && !isPremium && (enganche < engancheMin)){
                 Swal.fire({
@@ -206,10 +212,15 @@ export default function SellProcess() {
     }
 
     const prevStep = () => {
+        if(currentStep === 4 && !isPremium){
+            const totalCompra = getTotalAmount();
+            setEngancheMin(Math.ceil(totalCompra * .10));
+            setEnganche(Math.ceil(totalCompra * .10));
+        }   
         if (currentStep > 1){
             setCurrentStep(currentStep - 1);
             
-        }   
+        }
     }
 
     const handleSubmit = async () => {
@@ -284,9 +295,6 @@ export default function SellProcess() {
         
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-
-    console.log(paymentPlan);
-    
 
     return (
         <div className="max-w-7xl mx-auto h-screen bg-white p-6">
@@ -467,16 +475,16 @@ export default function SellProcess() {
                 {currentStep === 3 && (
                     <div>
                         <div className="text-lg mb-6 font-bold">
-                            Compra total: <span className="font-bold text-green-700">{formatPrice(getTotalAmount())}</span>
+                            Compra total: <span className="font-bold text-green-700">{paymentPlan !== 1 && paymentPlan ? formatPrice(getTotalAmount()) : formatPrice(getTotalAmountContado())}</span>
                         </div>
-                        {paymentPlan !== 1? 
+                        {paymentPlan !== 1 && paymentPlan? 
                             <div className="text-lg mb-6 font-bold">
                                 Enganche mínimo: <span className="font-bold text-green-700">{formatPrice(engancheMin)}</span>
                             </div>
                         : null}
                         {paymentPlan !== 1 && paymentPlan !== ""? 
                             <div className="text-lg mb-6 font-bold">
-                                Cantidad a financiar: <span className="font-bold text-green-700">{formatPrice(getTotalAmount() - enganche)}</span>
+                                Cantidad a financiar: <span className="font-bold text-green-700">{paymentPlan !== 1 && paymentPlan ? formatPrice(getTotalAmount() - enganche) : formatPrice(getTotalAmountContado() - enganche)}</span>
                             </div> 
                         : null}  
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -508,7 +516,7 @@ export default function SellProcess() {
                                 <h3 className="text-xl font-semibold mb-2">6 Meses</h3>
                                 <p className="text-3xl font-bold text-green-600 mb-2">{getMonthlyPayment(6)}/mes</p>
                             </div>
-                            {getTotalAmount() > 2990 ? <div
+                            {getTotalAmountContado() > 3500 ? <div
                                 className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
                                 paymentPlan === 12 ? "border-green-500 bg-white" : "border-gray-200 hover:border-gray-300"
                                 }`}
@@ -565,7 +573,7 @@ export default function SellProcess() {
                         <div className="mb-6">
                             <h3 className="font-semibold text-lg mb-2">Productos:</h3>
                             {cart.map((item) => (
-                                <div key={item.id} className="flex justify-between py-2 border-b">
+                                <div key={item.idProducto} className="flex justify-between py-2 border-b">
                                     <div>
                                         <span className="font-medium">{item.quantity} {item.descripcion}</span>
                                         <span className="text-gray-600 ml-2">({formatPrice(item.precio)} c/u)</span>
@@ -590,7 +598,7 @@ export default function SellProcess() {
                             : null}
                             <div className="flex justify-between text-md font-bold mb-2">
                                 <span>SubTotal:</span>
-                                <span>{formatPrice(getTotalAmount())}</span>
+                                <span>{paymentPlan !== 1 && paymentPlan ?  formatPrice(getTotalAmount()) :  formatPrice(getTotalAmountContado())}</span>
                             </div>
                             <div className="flex justify-between text-md font-bold mb-2">
                                 <span>Enganche:</span>
@@ -598,7 +606,7 @@ export default function SellProcess() {
                             </div>
                             <div className="flex justify-between text-xl font-bold mb-2">
                                 <span>Total:</span>
-                                <span>{formatPrice(getTotalAmount() - enganche)}</span>
+                                <span>{paymentPlan !== 1 && paymentPlan ? formatPrice(getTotalAmount() - enganche) : formatPrice(getTotalAmountContado())}</span>
                             </div>
                         </div>
                     </div>
