@@ -13,6 +13,7 @@ const INVENTARIO_INFO = gql`
             value
             color
             description
+            productos
         }
     }
 `;
@@ -214,19 +215,12 @@ export default function Dashboard() {
                                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                                                 <h5 className="font-semibold text-gray-800 text-sm">{item.name}</h5>
                                             </div>
-                                            <span
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                item.name === "Disponible" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                                                }`}
-                                            >
-                                                {((item.value / (data.getPendingInventory[0].value + data.getPendingInventory[1].value)) * 100).toFixed(1)}%
-                                            </span>
                                         </div>
 
                                         <div className="space-y-1">
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-600">Cantidad:</span>
-                                                <span className="font-medium">{item.value.toLocaleString()}</span>
+                                                <span className="font-medium">{item.productos}</span>
                                             </div>
                                             <div className="w-full bg-gray-200 rounded-full h-2">
                                                 <div
