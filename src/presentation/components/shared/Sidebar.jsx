@@ -24,7 +24,7 @@ function classNames(...classes) {
 
 export default function Sidebar() {
 
-    const { logout } = useContext(AuthContext);
+    const { logout, user } = useContext(AuthContext);
 
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const navigate = useNavigate()
@@ -38,6 +38,31 @@ export default function Sidebar() {
             logout();
         }
     }
+
+    const navigation = [
+        { name: "Inicio", href: "/", icon: Home},
+        { name: "Venta", href: "/Venta", icon: ShoppingCart },
+        { name: "Tarjetas", href: "/#", icon: CreditCard },
+        { name: "Empleados", href: "/ListaEmpleados", icon: Users },
+        { name: "Inventario", href: "/Inventario", icon: Package },
+        { name: "Clientes", href: "/ListaClientes", icon: UserCheck },
+        { name: "Historial Abonos", href: "/Abonos", icon: HandCoins },
+        { name: "Historial Ventas", href: "/Ventas", icon: DollarSignIcon },
+        { name: "Ubicaciones", href: "/Ubicaciones", icon: MapPin },
+        { name: "Enrutado", href: "/Enrutado", icon: MapIcon },
+        { name: "Cerrar sesión", href: "#", icon: LogOut }
+    ]
+    const navigation2 = [
+        { name: "Inicio", href: "/", icon: Home},
+        { name: "Venta", href: "/Venta", icon: ShoppingCart },
+        { name: "Clientes", href: "/ListaClientes", icon: UserCheck },
+        { name: "Historial Abonos", href: "/Abonos", icon: HandCoins },
+        { name: "Historial Ventas", href: "/Ventas", icon: DollarSignIcon },
+        { name: "Cerrar sesión", href: "#", icon: LogOut }
+    ]
+
+
+    const currentNavigation = user?.tipo === 1 ? navigation : navigation2;
 
     return (
         <>
@@ -71,7 +96,7 @@ export default function Sidebar() {
                 </div>
                 <nav className="mt-4 px-4 pb-4">
                     <ul className="space-y-1">
-                        {navigation.map((item) => (
+                        {currentNavigation.map((item) => (
                             <li key={item.name}>
                                 <button onClick={() => handleNavigation(item.href)}
                                     className={classNames(
@@ -112,7 +137,7 @@ export default function Sidebar() {
                     </div>
                     <nav className="mt-4 flex-1 px-4 pb-4 overflow-y-auto">
                         <ul className="space-y-1">
-                            {navigation.map((item) => (
+                            {currentNavigation.map((item) => (
                                 <li key={item.name}>
                                     <button
                                         onClick={() => handleNavigation(item.href)}

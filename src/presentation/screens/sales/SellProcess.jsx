@@ -245,10 +245,8 @@ export default function SellProcess() {
             const resp = await insertVenta({
                 variables: {
                     input: {
-                        total: getTotalAmount(),
-                        usuario_reg: 70,
+                        total:  tipoCompra === 1 ? getTotalAmountContado() : getTotalAmount(),
                         idCliente: selectedClient,
-                        fecha: "2025-06-19 12:39:00",
                         tipo: tipoCompra,
                         productos: products,
                         abono: parseFloat(enganche),
