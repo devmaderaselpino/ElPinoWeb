@@ -238,7 +238,7 @@ export default function SellProcess() {
         const products = cart.map((product) => ({
             idProducto: product.idProducto,
             cantidad: product.quantity,
-            precio: product.precio
+            precio: tipoCompra > 1 ? Math.ceil(product.precio * 1.43) : product.precio
         }));
         
         try {

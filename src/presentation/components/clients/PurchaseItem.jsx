@@ -1,5 +1,5 @@
 
-import { Package, Eye, HandCoins } from 'lucide-react';
+import { Package, Eye, HandCoins, PackageX } from 'lucide-react';
 import { useState } from 'react';
 import formatPrice from '../../../functions/FormatPrice';
 import { format } from "@formkit/tempo";
@@ -47,7 +47,7 @@ const PurchaseItem = ({ purchase }) => {
 
             <div className="p-6 pt-0">
                 <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4">
                         <button
                             onClick={() => setExpanded(!expanded)}
                             className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
@@ -55,6 +55,15 @@ const PurchaseItem = ({ purchase }) => {
                             <Eye className="h-4 w-4" />
                             {expanded ? 'Ocultar detalle' : 'Ver detalle'}
                         </button>
+                        {purchase.status === 1 ? 
+                            <button
+                                onClick={() => navigate(`/Cancelaciones/${purchase.idVenta}`)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <PackageX className="h-4 w-4" />
+                                Cancelaciones
+                            </button>
+                        : null }
                         
                         <button
                             onClick={() => navigate(`/TablaPagos/${purchase.idVenta}`)}
