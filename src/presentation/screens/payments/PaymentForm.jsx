@@ -13,6 +13,7 @@ const SALE_INFO = gql`
             abono
             pendiente
             atrasado
+            interes
         }
     }
 `;
@@ -63,7 +64,7 @@ export default function PaymentForm() {
                     abono: parseFloat(paymentAmount),
                     saldo_anterior: data.getTotalsBySale.pendiente,
                     saldo_nuevo: data.getTotalsBySale.pendiente - parseFloat(paymentAmount),
-                    liquidado: parseFloat(paymentAmount) === parseFloat(data.getTotalsBySale.pendiente.toFixed(2)) ? 1 : 0
+                    liquidado: parseFloat(paymentAmount) === (parseFloat(data.getTotalsBySale.pendiente.toFixed(2)) + parseFloat(data.getTotalsBySale.interes.toFixed(2))) ? 1 : 0
                 }
             });
 
@@ -119,7 +120,7 @@ export default function PaymentForm() {
                     </div>
 
                     <div className="px-6 py-4 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-3">Información del Cliente</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-3">Nombre del cliente</h2>
                         <div className="bg-gray-50 rounded-lg p-4">
                             <p className="text-xl font-medium text-gray-900">{data.getTotalsBySale.nombre}</p>
                         </div>
@@ -134,15 +135,18 @@ export default function PaymentForm() {
                                 <p className="text-sm font-medium text-green-800">Para liquidar</p>
                                 <p className="text-2xl font-bold text-green-600">{formatPrice(data.getTotalsBySale.pendiente)}</p>
                             </div>
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <p className="text-sm font-medium text-black">Saldo mensual</p>
+                                <p className="text-2xl font-bold text-black">{formatPrice(data.getTotalsBySale.abono)}</p>
+                            </div>
                             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                                 <p className="text-sm font-medium text-yellow-800">Saldo vencido</p>
                                 <p className="text-xl font-bold text-yellow-600">{formatPrice(data.getTotalsBySale.atrasado)}</p>
                             </div>
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 md:col-span-2">
-                                <p className="text-sm font-medium text-orange-800">Saldo mensual</p>
-                                <p className="text-2xl font-bold text-orange-600">{formatPrice(data.getTotalsBySale.abono)}</p>
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                <p className="text-sm font-medium text-yellow-800">Interés moratorio</p>
+                                <p className="text-xl font-bold text-yellow-600">{formatPrice(data.getTotalsBySale.interes)}</p>
                             </div>
-
                         </div>
                     </div>
 
