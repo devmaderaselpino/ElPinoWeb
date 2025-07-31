@@ -13,6 +13,8 @@ const PAYMENT_TABLE = gql`
             num_pago
             cantidad
             abono
+            interes
+            abono_interes
             fecha_programada
             fecha_liquido
             pagado
@@ -61,6 +63,9 @@ export default function PaymentTable() {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
+    console.log(data);
+    
+
     return (
         <div className="p-4 sm:p-6 max-w-8xl mx-auto">
             <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800">Tabla de Pagos</h1>
@@ -77,6 +82,12 @@ export default function PaymentTable() {
                             </th>
                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
                                 Abono
+                            </th>
+                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
+                                Interés
+                            </th>
+                            <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
+                                Abono interés
                             </th>
                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
                                 Fecha Programada
@@ -100,6 +111,12 @@ export default function PaymentTable() {
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {formatPrice(payment.abono)}
+                                </td>
+                                <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatPrice(payment.interes)}
+                                </td>
+                                <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatPrice(payment.abono_interes)}
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{payment.fecha_programada}</td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -141,6 +158,14 @@ export default function PaymentTable() {
                             <div>
                                 <span className="text-gray-500 block">Abono:</span>
                                 <span className="font-medium text-gray-900">{formatPrice(payment.abono)}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500 block">Interés:</span>
+                                <span className="font-medium text-gray-900">{formatPrice(payment.interes)}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500 block">Abono interés:</span>
+                                <span className="font-medium text-gray-900">{formatPrice(payment.abono_interes)}</span>
                             </div>
                             <div>
                                 <span className="text-gray-500 block">F. Programada:</span>
