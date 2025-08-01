@@ -401,7 +401,7 @@ export default function SellProcess() {
                         </div>
 
                         <div className="relative mb-6">
-                            <div className="overflow-hidden">
+                            <div className="rounded-lg shadow-lg">
                                 <div
                                     className="flex transition-transform duration-300"
                                     style={{ transform: `translateX(-${currentProductIndex * 100}%)` }}

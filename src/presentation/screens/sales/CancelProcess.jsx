@@ -36,6 +36,12 @@ const EDIT_SALE = gql`
     }
 `;
 
+const CANCEL_SALE = gql`
+    mutation CancelSale($idVenta: Int) {
+        cancelSale(idVenta: $idVenta)
+    }
+`;
+
 const CancelProcess = () => {
 
     const {idVenta} = useParams();
@@ -47,6 +53,8 @@ const CancelProcess = () => {
     });
 
     const [editarVenta, { loadingInsert }] = useMutation(EDIT_SALE);
+
+    const [cancelarVenta, { loadingCancel }] = useMutation(CANCEL_SALE);
     
     const [cancellationArray, setCancellationArray] = useState([])
 
@@ -99,9 +107,6 @@ const CancelProcess = () => {
     }
 
     const editSale = async (cancelaciones) => {
-
-        console.log(cancelaciones);
-        
 
         try {
             const resp = await editarVenta({
@@ -201,7 +206,34 @@ const CancelProcess = () => {
         return currentCancellations > 0
     }
 
-    if(loading || loadingInsert){
+    const cancelacion = async () => {
+        try {
+            const resp = await cancelarVenta({
+                variables:{
+                    idVenta: parseInt(idVenta)
+                }
+            })
+
+            if(resp.data.cancelSale === "Venta cancelada."){
+                Swal.fire({
+                    title: "Venta cancelada con éxito!",
+                    text: "Se ha cancelado la venta seleccionada.",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        refetch()
+                    }
+                }); 
+            }
+
+        } catch (error) {
+            
+        }
+    }
+
+    if(loading || loadingInsert || loadingCancel){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -232,10 +264,10 @@ const CancelProcess = () => {
                             ? "bg-yellow-100 text-yellow-800"
                             : data.getSaleByClient.status === 2
                                 ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
+                                : "bg-green-600 text-white"
                         }`}
                         >
-                            {data.getSaleByClient.status === 1? "Pendiente" : "Cancelada"}
+                            {data.getSaleByClient.status === 1? "Pendiente" : data.getSaleByClient.status === 0 ? "Liquidada" : "Cancelada"}
                         </span>
                         <span className="text-3xl font-bold text-gray-800">{formatPrice(data.getSaleByClient.total)}</span>
                     </div>
@@ -243,10 +275,60 @@ const CancelProcess = () => {
 
                 
                 <div className="text-center mb-8 space-y-4">
-                    {data.getSaleByClient.status === 1 ? 
+                    {data.getSaleByClient.status === 1 || (data.getSaleByClient.status === 0 && data.getSaleByClient.tipo === 1)? 
                         <div className="text-center mb-8">
                             <button
-                                //onClick={cancelEntireSale}
+                                onClick={ async () =>{
+
+                                    const mappedProducts = data.getSaleByClient.getProducts.map(product => ({
+                                        idProducto: product.id,
+                                        idVenta: parseInt(idVenta),
+                                        precio: product.precio,
+                                        cantidad: product.cantidad,
+                                    }));
+
+                                    if(data.getSaleByClient.status === 0 && data.getSaleByClient.tipo === 1){
+                                        const confirmationHtml = `
+                                            <div class="text-left">
+                                                <p class="font-semibold mb-3">Productos a cancelar:</p>
+                                                ${mappedProducts
+                                                .map((item) => {
+                                                    const product = data.getSaleByClient.getProducts.find((p) => p.id === item.idProducto)
+                                                    
+                                                    return `
+                                                    <div class="mb-2 p-2 bg-gray-50 rounded">
+                                                    <p><strong>${product.descripcion}</strong></p>
+                                                    <p class="text-sm">Cancelar: ${item.cantidad} unidades | Total: ${formatPrice(item.precio * item.cantidad)}</p>
+                                                    </div>
+                                                `
+                                                })
+                                                .join("")}
+                                                <div class="mt-3 p-3 bg-red-50 rounded border-l-4 border-red-400">
+                                                    <p class="font-semibold text-red-800">Total a cancelar: ${formatPrice(data.getSaleByClient.total)}</p>
+                                                </div>
+                                            </div>
+                                        `
+        
+                                        const result = await Swal.fire({
+                                            title: "Confirmar cancelación",
+                                            html: confirmationHtml,
+                                            icon: "warning",
+                                            showCancelButton: true,
+                                            confirmButtonColor: "#1e8449",
+                                            cancelButtonColor: "#f39c12",
+                                            confirmButtonText: "Aceptar",
+                                            cancelButtonText: "Cancelar",
+                                        })
+
+                                        if (result.isConfirmed) {
+                                           
+                                            cancelacion();
+                                        }
+                                        
+                                    }else{
+                                        setCancellationArray(mappedProducts);
+                                    }
+                                }}
                                 disabled={data.getSaleByClient.status === 2 }
                                 className="inline-flex items-center space-x-2 px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-lg font-medium"
                             >
@@ -283,7 +365,6 @@ const CancelProcess = () => {
                                 const canAddMore = canAddMoreCancellations(product.id, product.cantidad)
                                 const canRemove = canRemoveCancellations(product.id)
 
-
                                 return (
                                     <div
                                         key={product.id}
@@ -314,47 +395,48 @@ const CancelProcess = () => {
                                                 Total: {formatPrice(product.precio * product.cantidad)}
                                                 </p>
                                             </div>
-
-                                            <div className="flex space-x-2">
-                        
-                                                <button
-                                                    onClick={() => removeFromCancellationArray(product.id)}
-                                                    disabled={!canRemove}
-                                                    className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
-                                                        canRemove
-                                                        ? "text-green-600 hover:bg-green-50"
-                                                        : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                                    }`}
-                                                    title={canRemove ? "Regresar 1 unidad" : "No hay unidades para regresar"}
-                                                    >
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                                                        />
-                                                    </svg>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => addToCancellationArray(product.id, product.precio)}
-                                                    disabled={!canAddMore}
-                                                    className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
-                                                    canAddMore ? "text-red-600 hover:bg-red-50" : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                                    }`}
-                                                    title={canAddMore ? "Agregar 1 unidad a cancelar" : "No se pueden cancelar más unidades"}
-                                                >
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path
+                                            {data.getSaleByClient.status !== 0 ?  
+                                                <div className="flex space-x-2">
+                            
+                                                    <button
+                                                        onClick={() => removeFromCancellationArray(product.id)}
+                                                        disabled={!canRemove}
+                                                        className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
+                                                            canRemove
+                                                            ? "text-green-600 hover:bg-green-50"
+                                                            : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                                        }`}
+                                                        title={canRemove ? "Regresar 1 unidad" : "No hay unidades para regresar"}
+                                                        >
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
                                                             strokeLinecap="round"
                                                             strokeLinejoin="round"
                                                             strokeWidth={2}
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                                            d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                                                            />
+                                                        </svg>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => addToCancellationArray(product.id, product.precio)}
+                                                        disabled={!canAddMore}
+                                                        className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
+                                                        canAddMore ? "text-red-600 hover:bg-red-50" : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                                        }`}
+                                                        title={canAddMore ? "Agregar 1 unidad a cancelar" : "No se pueden cancelar más unidades"}
+                                                    >
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            : null }
                                         </div>
                                     </div>
                                 )

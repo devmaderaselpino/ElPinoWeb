@@ -47,14 +47,19 @@ const PurchaseItem = ({ purchase }) => {
 
             <div className="p-6 pt-0">
                 <div className="space-y-4">
+                    {purchase.status === 2 && purchase.tipo > 1 ? <span className="text-sm font-bold text-red-600 text-center">No existe detalle de la venta, todo fue cancelado.</span>: null}
                     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4">
-                        <button
-                            onClick={() => setExpanded(!expanded)}
-                            className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
-                        >
-                            <Eye className="h-4 w-4" />
-                            {expanded ? 'Ocultar detalle' : 'Ver detalle'}
-                        </button>
+                        {purchase.status !== 2 || (purchase.status === 2 && purchase.tipo === 1)? 
+                            <button
+                                onClick={() => setExpanded(!expanded)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <Eye className="h-4 w-4" />
+                                {expanded ? 'Ocultar detalle' : 'Ver detalle'}
+                            </button>
+                            : null
+                        }
+
                         {purchase.status === 1 ? 
                             <button
                                 onClick={() => navigate(`/Cancelaciones/${purchase.idVenta}`)}
@@ -64,14 +69,25 @@ const PurchaseItem = ({ purchase }) => {
                                 Cancelaciones
                             </button>
                         : null }
+                        {purchase.status === 0 && purchase.tipo === 1? 
+                            <button
+                                onClick={() => navigate(`/Cancelaciones/${purchase.idVenta}`)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <PackageX className="h-4 w-4" />
+                                Cancelar venta
+                            </button>
+                        : null }
                         
-                        <button
-                            onClick={() => navigate(`/TablaPagos/${purchase.idVenta}`)}
-                            className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
-                        >
-                            <Eye className="h-4 w-4" />
-                            Tabla de pagos
-                        </button>
+                        {purchase.tipo !== 1 && purchase.status !== 2 ? 
+                            <button
+                                onClick={() => navigate(`/TablaPagos/${purchase.idVenta}`)}
+                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
+                            >
+                                <Eye className="h-4 w-4" />
+                                Tabla de pagos
+                            </button>
+                        : null}
                         
                         {purchase.status === 1 ? 
                             <button

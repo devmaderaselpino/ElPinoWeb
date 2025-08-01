@@ -47,6 +47,7 @@ const SALES_LIST = gql`
             usuario_reg
             idCliente
             status
+            tipo
             getProducts {
                 id
                 descripcion
@@ -114,9 +115,6 @@ const ClientDetails = () => {
     if(errorClient || errorSale || errorSales || errorStats) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-
-    console.log(dataStats);
-    
 
     return(
         <div className="mt-10">
