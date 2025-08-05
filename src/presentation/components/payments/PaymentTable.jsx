@@ -1,7 +1,8 @@
 import React from 'react';
-import { Eye, FileText } from 'lucide-react';
+import { Trash2, FileText } from 'lucide-react';
 
-export function PaymentTable({ payments = [] }) {
+export function PaymentTable({ payments = [], onDelete }) {
+
     if (!payments.length) {
         return (
             <div className="p-8 text-center">
@@ -30,10 +31,10 @@ export function PaymentTable({ payments = [] }) {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {payments.map((payment, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
+                    {payments.map((payment) => (
+                        <tr key={payment.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {payment.fecha}
+                                {payment.fecha}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {payment.cliente}
@@ -49,10 +50,13 @@ export function PaymentTable({ payments = [] }) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <button
-                                className="text-primary-600 hover:text-primary-900 p-1 rounded-md hover:bg-primary-50"
-                                title="Ver detalle"
+                                    className="text-primary-600 hover:text-primary-900 p-1 rounded-md hover:bg-primary-50"
+                                    title="Ver detalle"
+                                    onClick={ async () => {
+                                        await onDelete(payment.id)
+                                    }}
                                 >
-                                <Eye className="text-blue-700 h-4 w-4" />
+                                    <Trash2 className="text-red-700 h-4 w-4" />
                                 </button>
                             </td>
                         </tr>

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react'; 
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useMutation } from '@apollo/client';
 import { startOfWeek, endOfWeek, format, parseISO, isAfter, isBefore, isEqual } from 'date-fns';
 import { PaymentFilters } from '../../components/payments/PaymentFilters';
 import { PaymentTable } from '../../components/payments/PaymentTable';
 import { PaymentSummary } from '../../components/payments/PaymentSummary';
 import { HandCoins } from 'lucide-react';
+import Swal from "sweetalert2";
 
 const GET_ABONOS = gql`
     query GetAbonos {
         GetAbonos {
+            id
             fecha
             cliente
             abono
@@ -18,8 +20,15 @@ const GET_ABONOS = gql`
     }
 `;
 
+const CANCELAR_PAGO = gql`
+    mutation CancelPayment($idAbono: Int) {
+        cancelPayment(idAbono: $idAbono)
+    }
+`;
+
 const HistorialAbonos = () => {
-    const { data, loading, error } = useQuery(GET_ABONOS);
+    const { data, loading, error, refetch } = useQuery(GET_ABONOS);
+    const [cancelPayment, { loading: loadingCancel }] = useMutation(CANCELAR_PAGO);
     const abonos = data?.GetAbonos || [];
 
     const now = new Date();
@@ -55,7 +64,7 @@ const HistorialAbonos = () => {
         setCurrentPage(1);
     }, [abonos, searchQuery, selectedClient, startDate, endDate]);
 
-    if (loading) return <div className="p-4">Cargando abonos...</div>;
+    if (loading || loadingCancel) return <div className="p-4">Cargando abonos...</div>;
     if (error) return <div className="p-4 text-red-600">Error al cargar abonos</div>;
 
     const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
@@ -63,6 +72,65 @@ const HistorialAbonos = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+
+    const alerta = async (id) => {
+       
+        try {
+            Swal.fire({
+                title: "¿Desea cancelar el abono?",
+                showCancelButton: true,
+                confirmButtonText: "Aceptar",
+                cancelButtonText: "Cancelar",
+                confirmButtonColor: "#1e8449",
+                cancelButtonColor: "#f39c12"
+                
+                }).then((result) => {
+
+                if (result.isConfirmed) {
+                    cancelarAbono(id);
+                }
+            }); 
+            
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const cancelarAbono = async (id) => {
+       
+        
+        try {
+            const resp = await cancelPayment({
+                variables: {
+                    idAbono: id
+                }
+            })
+
+            if(resp.data.cancelPayment === "Abono cancelado."){
+                Swal.fire({
+                    title: "Abono cancelado con éxito!",
+                    text: "Se ha cancelado el abono seleccionado.",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        refetch()
+                    }
+                }); 
+            }
+        } catch (error) {
+            console.log(error);
+            Swal.fire({
+                title: "Ha ocurrido un error",
+                text: "No se ha podido cancelar el abono.",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#1e8449",
+            })
+        }
+    }
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-7x">
@@ -94,7 +162,7 @@ const HistorialAbonos = () => {
                     />
                 </div>
 
-                <PaymentTable payments={paginatedPayments} />
+                <PaymentTable payments={paginatedPayments} onDelete={alerta}/>
 
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center py-4 space-x-4 border-t border-gray-100">
