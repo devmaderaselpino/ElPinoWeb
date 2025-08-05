@@ -14,6 +14,7 @@ const SALE_INFO = gql`
             pendiente
             atrasado
             interes
+            total
         }
     }
 `;
@@ -62,8 +63,8 @@ export default function PaymentForm() {
                 variables: {
                     idVenta: parseInt(idVenta),
                     abono: parseFloat(paymentAmount),
-                    saldo_anterior: data.getTotalsBySale.pendiente,
-                    saldo_nuevo: data.getTotalsBySale.pendiente - parseFloat(paymentAmount),
+                    saldo_anterior: data.getTotalsBySale.total,
+                    saldo_nuevo: data.getTotalsBySale.total - parseFloat(paymentAmount),
                     liquidado: parseFloat(paymentAmount) === (parseFloat(data.getTotalsBySale.pendiente.toFixed(2)) + parseFloat(data.getTotalsBySale.interes.toFixed(2))) ? 1 : 0
                 }
             });
