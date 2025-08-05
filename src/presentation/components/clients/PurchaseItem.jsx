@@ -69,16 +69,6 @@ const PurchaseItem = ({ purchase }) => {
                                 Cancelaciones
                             </button>
                         : null }
-                        {purchase.status === 0 && purchase.tipo === 1? 
-                            <button
-                                onClick={() => navigate(`/Cancelaciones/${purchase.idVenta}`)}
-                                className="mt-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 bg-white hover:bg-accent hover:text-accent-foreground h-9  px-3"
-                            >
-                                <PackageX className="h-4 w-4" />
-                                Cancelar venta
-                            </button>
-                        : null }
-                        
                         {purchase.tipo !== 1 && purchase.status !== 2 ? 
                             <button
                                 onClick={() => navigate(`/TablaPagos/${purchase.idVenta}`)}
