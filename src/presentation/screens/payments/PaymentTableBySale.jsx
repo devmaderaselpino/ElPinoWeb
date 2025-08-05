@@ -81,13 +81,13 @@ export default function PaymentTable() {
                                 Cantidad
                             </th>
                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
-                                Abono
+                                Restante
                             </th>
                              <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
                                 Interés
                             </th>
                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
-                                Abono interés
+                                Restante
                             </th>
                             <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200">
                                 Fecha Programada
@@ -110,13 +110,13 @@ export default function PaymentTable() {
                                     {formatPrice(payment.cantidad)}
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {formatPrice(payment.abono)}
+                                    {formatPrice(payment.cantidad - payment.abono)}
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {formatPrice(payment.interes)}
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {formatPrice(payment.abono_interes)}
+                                    {formatPrice(payment.interes - payment.abono_interes)}
                                 </td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{payment.fecha_programada}</td>
                                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -156,16 +156,16 @@ export default function PaymentTable() {
                                 <span className="font-medium text-gray-900">{formatPrice(payment.cantidad)}</span>
                             </div>
                             <div>
-                                <span className="text-gray-500 block">Abono:</span>
-                                <span className="font-medium text-gray-900">{formatPrice(payment.abono)}</span>
+                                <span className="text-gray-500 block">Restante:</span>
+                                <span className="font-medium text-gray-900">{formatPrice(payment.cantidad - payment.abono)}</span>
                             </div>
                             <div>
                                 <span className="text-gray-500 block">Interés:</span>
                                 <span className="font-medium text-gray-900">{formatPrice(payment.interes)}</span>
                             </div>
                             <div>
-                                <span className="text-gray-500 block">Abono interés:</span>
-                                <span className="font-medium text-gray-900">{formatPrice(payment.abono_interes)}</span>
+                                <span className="text-gray-500 block">Restante:</span>
+                                <span className="font-medium text-gray-900">{formatPrice(payment.interes - payment.abono_interes)}</span>
                             </div>
                             <div>
                                 <span className="text-gray-500 block">F. Programada:</span>
