@@ -5,6 +5,7 @@ import Loading from "../../components/shared/Loading";
 import logo from '../../../assets/logo3.png';
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
+import Swal from "sweetalert2";
 
 const INICIO_SESION = gql`
     mutation LoginUser($input: userLoginInput) {
@@ -49,17 +50,26 @@ const LoginForm = () => {
                 login(resp.data.loginUser);
                 navigate("/");    
             }else{
-                console.log("Credenciales inválidas.");
-                
+                Swal.fire({
+                    title: "Credenciales inválidas!",
+                    text: "Revise su usuario o contraseña.",
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }) 
             }
             
         } catch (error) {
-            console.log(error);
-                
+            Swal.fire({
+                title: "Ha ocurrido un error",
+                text: "Inténtelo más tarde.",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#1e8449",
+            })     
         }
         
     }
-
 
     if(loading){
         return (

@@ -27,7 +27,7 @@ const CANCELAR_PAGO = gql`
 `;
 
 const HistorialAbonos = () => {
-    const { data, loading, error, refetch } = useQuery(GET_ABONOS);
+    const { data, loading, error, refetch } = useQuery(GET_ABONOS, {fetchPolicy:"network-only"});
     const [cancelPayment, { loading: loadingCancel }] = useMutation(CANCELAR_PAGO);
     const abonos = data?.GetAbonos || [];
 
