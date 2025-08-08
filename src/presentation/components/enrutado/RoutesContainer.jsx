@@ -87,10 +87,10 @@ const RoutesContainer = ({ rutas = [], loading, error }) => {
                 <div
                     ref={setNodeRef}
                     className={`border-l-4 rounded-lg shadow-2xl p-6 min-h-[140px] flex flex-col justify-center items-center transition ${
-                        isOver ? 'bg-blue-50 ring-2 ring-blue-300 border-blue-500' : 'bg-white border-blue-400'
+                        isOver ? 'bg-blue-50 ring-2 ring-green-300 border-green-800' : 'bg-white border-green-800'
                     }`}
                 >
-                    <Route className="h-8 w-8 text-blue-400 mb-2" />
+                    <Route className="h-8 w-8 text-green-800 mb-2" />
                     <p className="text-sm text-gray-500 text-center">
                         Este cobrador no tiene rutas asignadas. Arrastra un cliente aquí para comenzar una.
                     </p>

@@ -43,6 +43,15 @@ const ELIMINAR_CLIENTE_DE_RUTA = gql`
         eliminarClienteDeRuta(input: $input)
     }
 `;
+const CREAR_RUTA = gql`
+  mutation CrearRuta($idCobrador: Int!) {
+    crearRuta(idCobrador: $idCobrador) {
+      success
+      message
+      idRuta
+    }
+  }
+`;
 
 const Enrutado = () => {
     const [selectedCollectorId, setSelectedCollectorId] = useState(null);
@@ -50,6 +59,9 @@ const Enrutado = () => {
     const [activeClient, setActiveClient] = useState(null);
 
     const sensors = useSensors(useSensor(PointerSensor));
+    
+
+
 
     const { data: dataRutas, refetch: refetchRutas, loading: loadingRutas, error: errorRutas} = useQuery(GET_RUTAS, {
         variables: { idCobrador: Number(selectedCollectorId) },
@@ -74,6 +86,19 @@ const Enrutado = () => {
             { query: GET_CLIENTES_SIN_ASIGNAR },
         ],
     });
+    const [crearRuta] = useMutation(CREAR_RUTA);
+    const handleCrearRuta = async (idCobrador) => {
+        try {
+            const { data } = await crearRuta({ variables: { idCobrador } });
+            console.log("Ruta creada:", data.crearRuta);
+             await refetchRutas();
+        } catch (error) {
+            console.error("Error al crear ruta:", error);
+        }
+        };
+
+
+
 
     const handleDragStart = (event) => {
         const { client, origin } = event.active.data.current;
@@ -81,38 +106,62 @@ const Enrutado = () => {
     };
 
 
-    const handleDragEnd = async (event) => {
-        const { active, over } = event;
-        setActiveClient(null);
-        if (!over) return;
+   const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveClient(null);
+    if (!over) return;
 
-        const client = active?.data?.current?.client;
-        const clientId = Number(client?.idCliente);
-        const origin = active?.data?.current?.origin;
-        const destination = over?.data?.current?.origin;
-        const destinationRouteId = over?.data?.current?.routeId;
+    const client = active?.data?.current?.client;
+    const clientId = Number(client?.idCliente);
+    const origin = active?.data?.current?.origin;
+    const destination = over?.data?.current?.origin;
+    const destinationRouteId = over?.data?.current?.routeId;
 
-        if (origin === destination && !destinationRouteId) return;
+    if (origin === destination && !destinationRouteId) return;
 
-        try {
-            if (origin === "ruta" && destination === "sinAsignar") {
-                await eliminarClienteDeRuta({
-                    variables: { input: { idCliente: clientId } },
+    try {
+        if (origin === "ruta" && destination === "sinAsignar") {
+            await eliminarClienteDeRuta({
+                variables: { input: { idCliente: clientId } },
+            });
+        } else if (origin === "sinAsignar") {
+            let idRuta = destinationRouteId;
+
+            // Si se soltó en un área vacía, crea una nueva ruta
+            if (!idRuta) {
+                const response = await crearRuta({
+                    variables: { idCobrador: selectedCollectorId },
                 });
-            } else if (origin === "sinAsignar") {
-                await asignarClienteARuta({
-                    variables: {
-                        input: {
-                            idCliente: clientId,
-                            idCobrador: selectedCollectorId,
-                        },
-                    },
-                });
+                idRuta = response?.data?.crearRuta?.idRuta;
+
+                if (!idRuta) {
+                    console.error("No se pudo obtener el idRuta de la nueva ruta");
+                    return;
+                }
+
+                // Refetch para que se vea visualmente
+                await refetchRutas();
             }
-        } catch (err) {
-            console.error("Error en movimiento de cliente:", err);
+
+            // Asignar cliente a la ruta nueva o existente
+            await asignarClienteARuta({
+                variables: {
+                    input: {
+                        idCliente: clientId,
+                        idCobrador: selectedCollectorId,
+                        idRuta,
+                    },
+                },
+            });
+
+            // Refetch visual opcional si el cliente no aparece en la UI
+            await refetchRutas();
+            await refetchClientesSinAsignar?.();
         }
-    };
+    } catch (err) {
+        console.error("Error en movimiento de cliente:", err);
+    }
+};
 
     return (
         <div className="p-6">
@@ -135,6 +184,7 @@ const Enrutado = () => {
                     refetchClientesSinAsignar={refetchClientesSinAsignar}
                     asignarClienteARuta={asignarClienteARuta}
                     eliminarClienteDeRuta={eliminarClienteDeRuta} 
+                    crearRuta={handleCrearRuta}
                 />
 
                 <DragOverlay>

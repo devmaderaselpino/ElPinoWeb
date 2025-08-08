@@ -1,10 +1,17 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search,CirclePlus } from 'lucide-react';
 import CollectorSelector from './CollectorSelector';
 import RoutesContainer from './RoutesContainer';
 import UnassignedClientsContainer from './UnassignedClientsContainer';
 
-const RouteAssignmentDashboard = ({ selectedCollectorId, onCollectorSelect, searchQuery, setSearchQuery, rutas, clientesSinAsignar, loading, error, refetchRutas,refetchClientesSinAsignar}) => {
+const RouteAssignmentDashboard = ({ selectedCollectorId, onCollectorSelect, searchQuery, setSearchQuery, rutas, clientesSinAsignar, loading, error, refetchRutas,refetchClientesSinAsignar,crearRuta,}) => {
+    const handleCrearRuta = async (idCobrador) => {
+    try {
+      await crearRuta(idCobrador);
+    } catch (err) {
+      console.error("Error al crear ruta:", err);
+    }
+  };
     return (
         <div className="bg-white space-y-6">
 
@@ -17,7 +24,16 @@ const RouteAssignmentDashboard = ({ selectedCollectorId, onCollectorSelect, sear
             </div>
 
             {selectedCollectorId && (
-                <>
+                <>      <div className="flex justify-end pr-140">
+                           <button
+                                onClick={() => handleCrearRuta(selectedCollectorId)}
+                                className="bg-green-800 hover:bg-green-600 text-white px-5 py-2 rounded-md text-lg flex items-center gap-2"
+                            >
+                                <CirclePlus className="w-5 h-5" />
+                                Crear Ruta
+                            </button>
+                       </div>
+                        
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search className="h-5 w-5 text-gray-400" />
