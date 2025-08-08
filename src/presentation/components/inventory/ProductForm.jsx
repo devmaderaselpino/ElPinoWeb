@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Package, ListPlus, Tag } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
+const ProductForm = ({ onSave, onCancel, categories, crearCategoria, imgUrl, onUploadImage ,clearImage}) => {
     const [activeTab, setActiveTab] = useState('producto');
     const [formData, setFormData] = useState({
         descripcion: '',
         categoria: '',
         nuevaCategoria: '',
         precio: '',
-        min_stock_rosario: '10',
-        min_stock_escuinapa: '10',
+        img_producto: '',
+        min_stock_rosario: '5',
+        min_stock_escuinapa: '5',
     });
     const [errors, setErrors] = useState({});
+
+    // Actualizar el campo img_producto cuando cambie la URL subida
+    useEffect(() => {
+        if (imgUrl) {
+            setFormData(prev => ({
+                ...prev,
+                img_producto: imgUrl
+            }));
+        }
+    }, [imgUrl]);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -54,26 +65,38 @@ const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
 
         if (activeTab === 'producto') {
             if (!formData.descripcion.trim()) newErrors.descripcion = 'La descripción es obligatoria';
-
+           if(!formData.img_producto) newErrors.img_producto = 'La imagen es obligatoria';
             const categoriaInt = parseInt(formData.categoria, 10);
             if (!categoriaInt && !formData.nuevaCategoria.trim()) {
                 newErrors.categoria = 'Selecciona o crea una categoría';
             }
+             
+            if (!formData.precio || parseFloat(formData.precio) <= 0) {
+                newErrors.precio = 'El precio es obligatorio y debe ser mayor a 0';
+            }
+            if (formData.min_stock_rosario <= 0) {
+                newErrors.min_stock_rosario = 'Debe ser mayor a 0';
+                }
+                if (formData.min_stock_escuinapa <= 0) {
+                newErrors.min_stock_escuinapa = 'Debe ser mayor a 0';
+                }
 
             if (Object.keys(newErrors).length > 0) return setErrors(newErrors);
 
-            // Si no hay categoría seleccionada, pero se quiere crear una nueva:
+            // Si va a crear categoría primero
             if (!categoriaInt && formData.nuevaCategoria.trim()) {
                 await handleCategoriaCreada();
                 return;
             }
 
+            // Guardar producto
             onSave({
                 descripcion: formData.descripcion,
                 categoria: categoriaInt,
                 precio: parseFloat(formData.precio),
-                min_stock_rosario: parseInt(formData.min_stock_rosario, 10),
-                min_stock_escuinapa: parseInt(formData.min_stock_escuinapa, 10),
+                img_producto: formData.img_producto,
+                min_stock_rosario: Number(formData.min_stock_rosario),
+                min_stock_escuinapa: Number(formData.min_stock_escuinapa),
             });
 
             await Swal.fire({
@@ -84,12 +107,12 @@ const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
                 customClass: {
                     confirmButton: 'bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded',
                 },
-                buttonsStyling: false
+                buttonsStyling: false 
             });
-
-            onCancel(); // Cierra el modal después de registrar producto
+               setErrors({});
+               clearImage(); 
+               onCancel();
         } else {
-            // Tab "categoria"
             if (!formData.nuevaCategoria.trim()) {
                 setErrors({ nuevaCategoria: 'La descripción de la categoría es obligatoria' });
                 return;
@@ -128,7 +151,7 @@ const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
                     </button>
                 </div>
 
-                {/* Form */}
+                {/* Formulario */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {activeTab === 'producto' ? (
                         <>
@@ -155,8 +178,27 @@ const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
                                         <option key={cat.idCategoria} value={cat.idCategoria}>{cat.descripcion}</option>
                                     ))}
                                 </select>
+                                {errors.categoria && <p className="text-xs text-red-500 mt-1">{errors.categoria}</p>}
                             </div>
 
+                           <div>
+                                <label className="block text-sm text-gray-700">Imagen</label>
+                                <input
+                                    type="file"
+                                    onChange={onUploadImage}
+                                    className={`w-full mt-1 p-2 border rounded ${errors.img_producto ? 'border-red-500' : 'border-gray-300'}`}
+                                />
+                                {errors.img_producto && (
+                                    <p className="text-xs text-red-500 mt-1">{errors.img_producto}</p>
+                                )}
+                                {imgUrl && (
+                                    <img
+                                    src={imgUrl}
+                                    alt="Vista previa"
+                                    className="w-32 h-32 mt-2 object-cover rounded border"
+                                    />
+                                )}
+                            </div>
                             <div>
                                 <label className="block text-sm text-gray-700">Precio</label>
                                 <input
@@ -166,25 +208,32 @@ const ProductForm = ({ onSave, onCancel, categories, crearCategoria }) => {
                                     onChange={(e) => handleInputChange('precio', e.target.value)}
                                     className="w-full mt-1 p-2 border border-gray-300 rounded"
                                 />
+                                  {errors.precio && <p className="text-xs text-red-500 mt-1">{errors.precio}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm text-gray-700">Min. Rosario</label>
-                                    <input
-                                        type="number"
-                                        value={formData.min_stock_rosario}
-                                        onChange={(e) => handleInputChange('min_stock_rosario', e.target.value)}
-                                        className="w-full mt-1 p-2 border border-gray-300 rounded"
+                                   <input
+                                    type="number"
+                                    min={1}
+                                    value={formData.min_stock_rosario}
+                                    onChange={(e) => handleInputChange('min_stock_rosario', Number(e.target.value))}
+                                    className={`appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                                                [&::-webkit-inner-spin-button]:m-0 w-full mt-1 p-2 border rounded 
+                                                ${errors.min_stock_rosario ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm text-gray-700">Min. Escuinapa</label>
-                                    <input
-                                        type="number"
-                                        value={formData.min_stock_escuinapa}
-                                        onChange={(e) => handleInputChange('min_stock_escuinapa', e.target.value)}
-                                        className="w-full mt-1 p-2 border border-gray-300 rounded"
+                                   <input
+                                    type="number"
+                                    min={1}
+                                    value={formData.min_stock_escuinapa}
+                                    onChange={(e) => handleInputChange('min_stock_escuinapa', Number(e.target.value))}
+                                    className={`appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                                                [&::-webkit-inner-spin-button]:m-0 w-full mt-1 p-2 border rounded 
+                                                ${errors.min_stock_escuinapa ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                 </div>
                             </div>

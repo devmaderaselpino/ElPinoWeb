@@ -1,24 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { gql, useQuery, useMutation } from '@apollo/client';
-import { Search, Plus, Package, AlertTriangle, Filter, Store, Boxes } from 'lucide-react';
+import { Search, Plus, Package, AlertTriangle, Filter, Store, Boxes,Bell } from 'lucide-react';
 import InventoryTable from '../../components/inventory/InventoryTable';
 import ProductForm from '../../components/inventory/ProductForm';
 import StockAdjustment from '../../components/inventory/StockAdjustment';
-
+import NotificationButton from '../../components/inventory/NotificationButton';
+import EditProductForm from '../../components/inventory/EditProductForm';
+import Swal from "sweetalert2";
 
 const GET_PRODUCTOS_INVENTARIOS = gql`
     query GetProductosInventarios {
-        GetProductosInventarios {
-            idProducto
-            nombre
-            categoria
-            precio
-            stock_rosario
-            min_stock_rosario
-            stock_escuinapa
-            min_stock_escuinapa
-        }
-    }
+  GetProductosInventarios {
+    idProducto
+    nombre
+    categoria
+    precio
+    stock_rosario
+    min_stock_rosario
+    stock_escuinapa
+    min_stock_escuinapa
+    status
+  }
+}
 `;
 
 const GET_CATEGORIAS = gql`
@@ -44,6 +47,7 @@ const CREAR_PRODUCTO_CON_INVENTARIOS = gql`
         $descripcion: String!,
         $categoria: Int!,
         $precio: Float!,
+        $img_producto: String,
         $stockMinRosario: Int!,
         $stockMinEscuinapa: Int!
     ) {
@@ -51,33 +55,105 @@ const CREAR_PRODUCTO_CON_INVENTARIOS = gql`
             descripcion: $descripcion,
             categoria: $categoria,
             precio: $precio,
+            img_producto: $img_producto,
             stockMinRosario: $stockMinRosario,
             stockMinEscuinapa: $stockMinEscuinapa
         ) {
             idProducto
             descripcion
+            img_producto
             precio
+
         }
     }
 `;
 
 const ACTUALIZAR_STOCK_ESCINAPA = gql`
-    mutation ActualizarStockEscuinapa($idProducto: Int!, $nuevoStock: Int!) {
-        actualizarStockEscuinapa(idProducto: $idProducto, nuevoStock: $nuevoStock) {
-            message
+    mutation ActualizarStockEscuinapa(
+        $idProducto: Int!
+        $nuevoStock: Int!
+        $nota: String!
+    ) {
+        actualizarStockEscuinapa(
+            idProducto: $idProducto
+            nuevoStock: $nuevoStock
+            nota: $nota
+        ) {
             success
+            message
         }
     }
 `;
 
 const ACTUALIZAR_STOCK_ROSARIO = gql`
-    mutation ActualizarStockRosario($idProducto: Int!, $nuevoStock: Int!) {
-        actualizarStockRosario(idProducto: $idProducto, nuevoStock: $nuevoStock) {
+    mutation ActualizarStockRosario(
+        $idProducto: Int!
+        $nuevoStock: Int!
+        $nota: String!
+    ) {
+        actualizarStockRosario(
+            idProducto: $idProducto
+            nuevoStock: $nuevoStock
+            nota: $nota
+        ) {
             success
             message
         }
     }
 `;
+const GET_HISTORIAL_AJUSTES = gql`
+  query GetHistorialAjustes {
+    getHistorialAjustes {
+      id
+      idProducto
+      producto
+      idUsuario
+      usuario
+      ubicacion
+      stockAnterior
+      cantidad
+      nota
+      fecha
+    }
+  }
+`;
+
+const ELIMINAR_PRODUCTO = gql`
+  mutation EliminarProducto($idProducto: Int!) {
+    eliminarProducto(idProducto: $idProducto) {
+      message
+      success
+    }
+    
+  }
+`;
+
+const ACTIVAR_PRODUCTO = gql`
+  mutation ActivarProducto($idProducto: Int!) {
+    activarProducto(idProducto: $idProducto) {
+     message
+     success
+      }
+  }
+`;
+
+const UPDATE_PRODUCTO = gql`
+  mutation UpdateProducto($idProducto: Int!, $descripcion: String, $categoria: Int, $precio: Float, $img_producto: String, $min_stock_rosario: Int,
+  $min_stock_escuinapa: Int) {
+    updateProducto(idProducto: $idProducto, descripcion: $descripcion, categoria: $categoria, precio: $precio, img_producto: $img_producto, min_stock_rosario: $min_stock_rosario, min_stock_escuinapa: $min_stock_escuinapa) {
+      success
+      message
+      producto {
+        idProducto
+        descripcion
+        categoria
+        precio
+        img_producto
+      }
+    }
+  }
+`;
+
 
 const Inventory = () => {
     const [products, setProducts] = useState([]);
@@ -87,19 +163,133 @@ const Inventory = () => {
     const [locationFilter, setLocationFilter] = useState('all');
     const [lowStockFilter, setLowStockFilter] = useState(false);
     const [showProductForm, setShowProductForm] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+    const [showEditProductForm, setShowEditProductForm] = useState(false);
+   const [movimientos, setMovimientos] = useState([]);
+   const [unreadCount, setUnreadCount] = useState(0); 
 
-    
     const { data, loading, error, refetch } = useQuery(GET_PRODUCTOS_INVENTARIOS);
-  
+    const { data: ajustesData, loading: ajustesLoading, error: ajustesError } = useQuery(GET_HISTORIAL_AJUSTES);
     
     const { data: categoriasData, loading: categoriasLoading, error: categoriasError, refetch: refetchCategories } = useQuery(GET_CATEGORIAS);
+    const [updateProducto, { loading: updateLoading, error: updateError }] = useMutation(UPDATE_PRODUCTO, {
+            onCompleted: (data) => {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: data.updateProducto.message,
+                icon: 'success',
+            });
+            refetch(); 
+            },
+            onError: (error) => {
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error',
+            });
+            },
+        });
 
-    const [crearProducto] = useMutation(CREAR_PRODUCTO_CON_INVENTARIOS, {
+    const [eliminarProducto] = useMutation(ELIMINAR_PRODUCTO, {
         onCompleted: () => {
-            setShowProductForm(false);
-            refetch();
+            refetch(); 
+            
         },
-    });
+        onError: (error) => {
+            console.error("Error al eliminar producto:", error);
+        },
+        });
+
+         const handleDeleteProduct = async (idProducto) => {
+                try {
+                    const resp = await eliminarProducto({ variables: { idProducto } });
+
+                    if (resp.data.eliminarProducto.success) {
+                        setProducts(prev =>
+                            prev.map(p =>
+                                p.idProducto === idProducto ? { ...p, status: 0 } : p // Cambiar el status a 0
+                            )
+                        );
+                        Swal.fire("Éxito", resp.data.eliminarProducto.message, "success");
+                    } else {
+                        Swal.fire("Error", resp.data.eliminarProducto.message, "error");
+                    }
+                } catch (error) {
+                    console.error("Error al eliminar producto:", error);
+                    Swal.fire("Error", "Ocurrió un error al eliminar el producto.", "error");
+                }
+            };
+
+            const handleActivateProduct = async (idProducto) => {
+                try {
+                    const resp = await activarProducto({ variables: { idProducto } });
+
+                    if (resp.data.activarProducto.success) {
+                        setProducts(prev =>
+                            prev.map(p =>
+                                p.idProducto === idProducto ? { ...p, status: 1 } : p // Cambiar el status a 1
+                            )
+                        );
+                        Swal.fire("Éxito", resp.data.activarProducto.message, "success");
+                    } else {
+                        Swal.fire("Error", resp.data.activarProducto.message, "error");
+                    }
+                } catch (error) {
+                    console.error("Error al activar producto:", error);
+                    Swal.fire("Error", "Ocurrió un error al activar el producto.", "error");
+                }
+            };
+
+
+        const handleEditProduct = (product) => {
+       console.log("Producto a editar:", product); 
+        setSelectedProduct(product);
+        setShowEditProductForm(true);
+    };
+     const handleEditClick = (product) => {
+    onEditProduct(product); // Llama la función onEditProduct pasada como prop
+   };
+    const handleCloseEditProductForm = () => {
+        setShowEditProductForm(false);
+        setSelectedProduct(null);
+    };
+
+    const handleUpdateProduct = (formData) => {
+ 
+     console.log("Producto a actualizar:", selectedProduct); // Verifica que selectedProduct tiene los datos correctos
+    console.log("idProducto:", selectedProduct?.idProducto); // Asegúrate de que idProducto esté presente
+
+    if (!selectedProduct || !selectedProduct.idProducto) {
+        console.error("Error: idProducto no está presente");
+        return;  // Si no está presente, salimos de la función
+    }
+
+
+        updateProducto({
+            variables: {
+                idProducto: selectedProduct.idProducto,
+                descripcion: formData.descripcion,
+                categoria: formData.categoria,
+                precio: formData.precio,
+                img_producto: formData.img_producto || selectedProduct.img_producto,
+                min_stock_rosario: formData.min_stock_rosario,
+                min_stock_escuinapa: formData.min_stock_escuinapa,
+            },
+        });
+    };
+            
+
+    
+                
+    
+    
+    
+        const [crearProducto] = useMutation(CREAR_PRODUCTO_CON_INVENTARIOS, {
+                    onCompleted: () => {
+                        setShowProductForm(false);
+                        refetch();
+                    },
+                });
 
     const [crearCategoria] = useMutation(CREAR_CATEGORIA, {
         onCompleted: () => {
@@ -109,37 +299,53 @@ const Inventory = () => {
 
     const [actualizarStockEscuinapa] = useMutation(ACTUALIZAR_STOCK_ESCINAPA);
     const [actualizarStockRosario] = useMutation(ACTUALIZAR_STOCK_ROSARIO);
+    const [activarProducto] = useMutation(ACTIVAR_PRODUCTO);
+    
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const resetImage = () => setUploadedImageUrl(null); 
 
     useEffect(() => {
         if (data?.GetProductosInventarios) {
             const productsWithId = data.GetProductosInventarios.map((p) => ({
-                id: p.idProducto,
+                idProducto: p.idProducto,
                 descripcion: p.nombre,
                 categoria: p.categoria,
                 precio: p.precio || 0,
+                img_producto: p.img_producto || 'https://placehold.co/150x150',
                 fecha_reg: new Date().toISOString().split('T')[0],
                 stock_rosario: p.stock_rosario,
                 min_stock_rosario: p.min_stock_rosario,
                 stock_escuinapa: p.stock_escuinapa,
                 min_stock_escuinapa: p.min_stock_escuinapa,
+                status:  p.status !== undefined && p.status !== null ? Number(p.status) : 1,
             }));
             setProducts(productsWithId);
         }
     }, [data]);
 
-    useEffect(() => {
-        const filtered = products.filter(product => {
-            const matchesSearch = product.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                product.categoria.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = categoryFilter === 'all' || product.categoria === categoryFilter;
-            const matchesLowStock = !lowStockFilter ||
-                product.stock_rosario < product.min_stock_rosario ||
-                product.stock_escuinapa < product.min_stock_escuinapa;
-            return matchesSearch && matchesCategory && matchesLowStock;
-        });
-        setFilteredProducts(filtered);
-    }, [products, searchTerm, categoryFilter, locationFilter, lowStockFilter]);
+useEffect(() => {
+    const filtered = products.filter(product => {
+        const matchesSearch = product.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.categoria.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || product.categoria === categoryFilter;
+        const matchesLowStock = !lowStockFilter ||
+            product.stock_rosario < product.min_stock_rosario ||
+            product.stock_escuinapa < product.min_stock_escuinapa;
+
+        return matchesSearch && matchesCategory && matchesLowStock;
+    });
+    setFilteredProducts(filtered);
+}, [products, searchTerm, categoryFilter, locationFilter, lowStockFilter])
+
+
+     useEffect(() => {
+    if (ajustesData?.getHistorialAjustes) {
+        console.log("Movimientos actualizados:", ajustesData.getHistorialAjustes);
+        setMovimientos(ajustesData.getHistorialAjustes); // Actualiza los movimientos
+        setUnreadCount(ajustesData.getHistorialAjustes.length); // Actualiza el contador de notificaciones
+    }
+}, [ajustesData]);
+
 
     const categories = ['all', ...Array.from(new Set(products.map(p => p.categoria)))];
     const lowStockCount = products.filter(
@@ -147,7 +353,13 @@ const Inventory = () => {
     ).length;
 
     if (loading || categoriasLoading) return <p className="text-center mt-10 text-gray-500">Cargando productos y categorías...</p>;
-    if (error || categoriasError) return <p className="text-center mt-10 text-red-500">Error al cargar inventario o categorías.</p>;
+
+    if (error || categoriasError) {
+        console.log(error)
+        console.error("Error productos:", error);
+        console.error("Error categorías:", categoriasError);
+        return <p className="text-center mt-10 text-red-500">Error al cargar inventario o categorías.</p>;
+    }
 
     const handleCreateProduct = (newProductData) => {
         crearProducto({
@@ -155,26 +367,93 @@ const Inventory = () => {
                 descripcion: newProductData.descripcion,
                 categoria: newProductData.categoria,
                 precio: newProductData.precio,
+                img_producto: newProductData.img_producto || uploadedImageUrl,
                 stockMinRosario: newProductData.min_stock_rosario,
                 stockMinEscuinapa: newProductData.min_stock_escuinapa,
             },
         });
     };
+     
+   
 
-    const handleStockAdjustment = async (productId, location, newStock) => {
+
+
+
+    const uploadImage = async (e) => {
         try {
-            if (location === 'rosario') {
-                await actualizarStockRosario({ variables: { idProducto: productId, nuevoStock: newStock } });
-            } else if (location === 'escuinapa') {
-                await actualizarStockEscuinapa({ variables: { idProducto: productId, nuevoStock: newStock } });
-            }
-            await refetch();
+            const files = e.target.files;
+            const data = new FormData();
+            data.append('file', files[0]);
+            data.append('upload_preset', 'elpinotumbado');
+
+            const response = await fetch('https://api.cloudinary.com/v1_1/dqh6utbju/image/upload', {
+            method: 'POST',
+            body: data,
+            });
+
+            const file = await response.json();
+            setUploadedImageUrl(file.secure_url);  
         } catch (error) {
-            console.error("Error ajustando el stock:", error);
+            console.error('Error uploading image:', error);
         }
-    };
+        };
+
+
+            const disableButtons = (product) => {
+            return product.status === 0; // o cualquier lógica que desees
+            };
+
+      const handleStockAdjustment = async (productId, location, newStock, nota, idUsuario) => {
+                    try {
+                        if (location === 'rosario') {
+                            await actualizarStockRosario({
+                                variables: {
+                                    idProducto: productId,
+                                    nuevoStock: newStock,
+                                    nota,
+                                    idUsuario,
+                                },
+                            });
+
+                            setSelectedProduct(prev => ({
+                                ...prev,
+                                stock_rosario: newStock,
+                            }));
+                        } else if (location === 'escuinapa') {
+                            await actualizarStockEscuinapa({
+                                variables: {
+                                    idProducto: productId,
+                                    nuevoStock: newStock,
+                                    nota,
+                                    idUsuario,
+                                },
+                            });
+
+                            setSelectedProduct(prev => ({
+                                ...prev,
+                                stock_escuinapa: newStock,
+                            }));
+                        }
+
+                        // Refetch para obtener los movimientos más recientes
+                        const result = await refetch(); 
+                          console.log("Refetch result:", result);
+                        // Verificar que result.data.getHistorialAjustes no sea undefined y que sea un array
+                        const nuevosMovimientos = result.data?.getHistorialAjustes || [];  // Usar un array vacío como valor predeterminado si no se obtiene la respuesta esperada
+                        
+                        setMovimientos(nuevosMovimientos);  // Actualizamos el estado de movimientos
+                        setUnreadCount(nuevosMovimientos.length);  // Actualizamos el contador de notificaciones
+                    } catch (error) {
+                        console.error("Error ajustando el stock:", error);
+                    }
+                };
+
+     
+
+  
 
     const handleOpenStockAdjustment = (product) => {
+         console.log("Producto seleccionado:", product); 
         setSelectedProduct(product);
     };
 
@@ -197,6 +476,12 @@ const Inventory = () => {
                         <Plus className="h-4 w-4 mr-2" />
                         Nuevo Producto
                     </button>
+                    <div>
+                        <NotificationButton
+                        unreadCount={unreadCount}
+                        movimientos={ajustesData?.getHistorialAjustes || []}/>
+                    </div>
+                    
                 </div>
 
                
@@ -214,6 +499,8 @@ const Inventory = () => {
                             </div>
                         </div>
                     ))}
+                   
+
                 </div>
 
                
@@ -270,27 +557,54 @@ const Inventory = () => {
 
                
                 <InventoryTable
+            
                     products={filteredProducts}
                     locationFilter={locationFilter}
                     categories={categoriasData?.getCategorias || []}
                     onStockAdjustment={handleOpenStockAdjustment}
+                    onDeleteProduct={handleDeleteProduct}
+                    disableButtons={disableButtons}
+                    onActivateProduct={handleActivateProduct}
+                    onEditProduct={handleEditProduct}
+
                 />
 
                 
                 {showProductForm && (
                     <ProductForm
                         onSave={handleCreateProduct}
-                        onCancel={() => setShowProductForm(false)}
+                        onCancel={() => {
+                            setShowProductForm(false);
+                            setUploadedImageUrl(null);
+                        }}
                         categories={categoriasData?.getCategorias || []}
                         crearCategoria={crearCategoria}
+                        imgUrl={uploadedImageUrl} 
+                        onUploadImage={uploadImage}
+                        clearImage={() => setUploadedImageUrl(null)}
                     />
                 )}
+                
+
 
                 {selectedProduct && (
                     <StockAdjustment
                         product={selectedProduct}
+                        setProduct={setSelectedProduct}
                         onAdjust={handleStockAdjustment}
                         onClose={() => setSelectedProduct(null)}
+                    />
+                )}
+
+                {showEditProductForm && selectedProduct && (
+                    <EditProductForm
+                        onSave={handleUpdateProduct}
+                        onCancel={handleCloseEditProductForm}
+                        categories={categoriasData?.getCategorias || []}
+                        imgUrl={uploadedImageUrl}
+                        onUploadImage={uploadImage}
+                        clearImage={() => setUploadedImageUrl(null)}
+                        initialValues={selectedProduct}
                     />
                 )}
             </div>

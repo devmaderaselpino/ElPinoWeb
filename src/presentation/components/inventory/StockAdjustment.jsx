@@ -4,15 +4,20 @@ import { X, Plus, Minus, MapPin } from 'lucide-react';
 const StockAdjustment = ({ product, onAdjust, onClose }) => {
     const [adjustments, setAdjustments] = useState({ rosario: '', escuinapa: '' });
     const [tab, setTab] = useState('rosario');
+    const [notes, setNotes] = useState({ rosario: '', escuinapa: '' });
 
     const handleAdjustment = (location) => {
-        const adjustment = parseInt(adjustments[location]);
-        if (!isNaN(adjustment) && adjustment !== 0) {
-            onAdjust(product.id, location, adjustment);
-            setAdjustments(prev => ({ ...prev, [location]: '' }));
-            setNotes(prev => ({ ...prev, [location]: '' }));
-        }
-    };
+    const adjustment = parseInt(adjustments[location]);
+    const note = notes[location]?.trim();
+
+    if (!note) return; 
+
+    if (!isNaN(adjustment) && adjustment !== 0) {
+        onAdjust(product.idProducto, location, adjustment, note);
+        setAdjustments(prev => ({ ...prev, [location]: '' }));
+        setNotes(prev => ({ ...prev, [location]: '' }));
+    }
+};
 
     const getNewStock = (location) => {
         const currentStock = location === 'rosario' ? product.stock_rosario : product.stock_escuinapa;
@@ -37,12 +42,18 @@ const StockAdjustment = ({ product, onAdjust, onClose }) => {
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
+              
                
                 <div className="p-6 overflow-y-auto grow">
                     
                     <div className="mb-6 bg-white p-4 rounded">
+                        
                         <h3 className="font-semibold text-2xl">{product.descripcion}</h3>
+                          <img
+                                    src={product.img_producto}
+                                   
+                                    className="w-50 h-50 ml-30  mt-3 object-cover rounded-md shadow"
+                                    />
                         <div className="mt-2 flex items-center gap-2">
                             <p className="text-md">Categoria:</p>
                             <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">{product.categoria}</span>
@@ -84,11 +95,20 @@ const StockAdjustment = ({ product, onAdjust, onClose }) => {
                                         </button>
                                         <input
                                             type="number"
-                                            className="w-50 text-center border rounded"
                                             value={adjustments[location]}
-                                            onChange={(e) => setAdjustments(prev => ({ ...prev, [location]: e.target.value }))}
+                                            onChange={(e) =>
+                                                setAdjustments((prev) => ({
+                                                ...prev,
+                                                [location]: e.target.value,
+                                                }))
+                                            }
                                             placeholder="0"
-                                        />
+                                            className={`w-24 text-center border rounded px-2 py-1 outline-none focus:ring-2 focus:ring-offset-1 ${
+                                                location === 'rosario'
+                                                ? 'focus:ring-green-600'
+                                                : 'focus:ring-blue-600'
+                                            }`}
+                                            />
                                         <button onClick={() => quickAdjustment(location, 1)} className="px-2 py-1 text-sm border rounded text-green-600 hover:bg-green-100">
                                             <Plus className="hh-6 w-6 inline-block" /> +1
                                         </button>
@@ -97,14 +117,39 @@ const StockAdjustment = ({ product, onAdjust, onClose }) => {
                                         </button>
                                     </div>
                                 </div>
-
-                                <button
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Nota del ajuste
+                                    </label>
+                                    <textarea
+                                        value={notes[location]}
+                                        onChange={(e) =>
+                                        setNotes((prev) => ({ ...prev, [location]: e.target.value }))
+                                        }
+                                        rows={2}
+                                        placeholder="Motivo del ajuste"
+                                        className={`w-full border border-gray-300 rounded p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                                        location === 'rosario'
+                                            ? 'focus:ring-green-600'
+                                            : 'focus:ring-blue-600'
+                                        }`}
+                                    />
+                                    </div>
+                                 <button
                                     onClick={() => handleAdjustment(location)}
-                                    disabled={!adjustments[location] || parseInt(adjustments[location]) === 0}
-                                    className={`w-full h-12 py-2 rounded text-white ${location === 'rosario' ? 'bg-green-600 hover:bg-green-800' : 'bg-blue-600 hover:bg-blue-800'}`}
-                                >
+                                    disabled={
+                                        !adjustments[location] ||
+                                        parseInt(adjustments[location]) === 0 ||
+                                        !notes[location]?.trim()
+                                    }
+                                    className={`w-full h-12 py-2 rounded text-white ${
+                                        location === 'rosario'
+                                        ? 'bg-green-600 hover:bg-green-800 disabled:bg-green-300'
+                                        : 'bg-blue-600 hover:bg-blue-800 disabled:bg-blue-300'
+                                    }`}
+                                    >
                                     Aplicar Ajuste en {location === 'rosario' ? 'Rosario' : 'Escuinapa'}
-                                </button>
+                                    </button>
                             </div>
                         )
                     ))}
