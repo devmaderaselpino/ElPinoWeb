@@ -55,6 +55,14 @@ const SALES_LIST = gql`
                 precio
                 img_producto
             }
+            getCancelados {
+                id
+                idProducto
+                descripcion
+                cantidad
+                precio
+                img_producto
+            }
         }
     }
 `;

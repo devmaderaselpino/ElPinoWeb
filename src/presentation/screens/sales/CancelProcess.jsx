@@ -21,6 +21,15 @@ const SALE = gql`
             tipo
             getProducts {
                 id
+                idProducto
+                descripcion
+                cantidad
+                precio
+                img_producto
+            }
+            getCancelados {
+                id
+                idProducto
                 descripcion
                 cantidad
                 precio
@@ -36,12 +45,6 @@ const EDIT_SALE = gql`
     }
 `;
 
-const CANCEL_SALE = gql`
-    mutation CancelSale($idVenta: Int) {
-        cancelSale(idVenta: $idVenta)
-    }
-`;
-
 const CancelProcess = () => {
 
     const {idVenta} = useParams();
@@ -54,9 +57,7 @@ const CancelProcess = () => {
 
     const [editarVenta, { loadingInsert }] = useMutation(EDIT_SALE);
 
-    const [cancelarVenta, { loadingCancel }] = useMutation(CANCEL_SALE);
-    
-    const [cancellationArray, setCancellationArray] = useState([])
+    const [cancellationArray, setCancellationArray] = useState([]);
 
     const calculateCancellationTotal = () => {
         return cancellationArray.reduce((total, item) => total + item.precio * item.cantidad, 0)
@@ -91,7 +92,6 @@ const CancelProcess = () => {
         updatedArray[existingIndex].cantidad += 1
         setCancellationArray(updatedArray)
 
-        
         } else {
 
             const newItem = {
@@ -106,13 +106,14 @@ const CancelProcess = () => {
 
     }
 
-    const editSale = async (cancelaciones) => {
-
+    const editSale = async (cancelaciones, historial) => {
+        
         try {
             const resp = await editarVenta({
                 variables: {
                     input: {
                         productos: cancelaciones,
+                        historial: historial,
                         idVenta: parseInt(idVenta),
                         totalCancelado: calculateCancellationTotal()
                     }
@@ -136,12 +137,25 @@ const CancelProcess = () => {
             }
             
         } catch (error) {
-            console.log(error);
-            
+             Swal.fire({
+                title: "Ocurrió un error!",
+                text: "No se han podido cancelar los productos",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#1e8449",
+            })
         }
     }
 
     const processCancellations = async () => {
+
+        const mappedProducts = data.getSaleByClient.getProducts.map(product => ({
+            idProducto: product.idProducto,
+            idVenta: parseInt(idVenta),
+            precio: product.precio,
+            cantidad: product.cantidad,
+        }));
+        
         if (cancellationArray.length === 0) {
             Swal.fire({
                 title: "Sin cancelaciones",
@@ -187,7 +201,7 @@ const CancelProcess = () => {
 
         if (result.isConfirmed) {
             //setCancellationArray([]);
-            editSale(cancellationArray)
+            editSale(cancellationArray, mappedProducts)
         }
     }
 
@@ -206,34 +220,16 @@ const CancelProcess = () => {
         return currentCancellations > 0
     }
 
-    const cancelacion = async () => {
-        try {
-            const resp = await cancelarVenta({
-                variables:{
-                    idVenta: parseInt(idVenta)
-                }
-            })
+    const calculateTotal = (purchase) => {
+        
+        const total = purchase.getCancelados.reduce((accumulator, item) => {
+            return accumulator + (item.cantidad * item.precio);
+        }, 0);
 
-            if(resp.data.cancelSale === "Venta cancelada."){
-                Swal.fire({
-                    title: "Venta cancelada con éxito!",
-                    text: "Se ha cancelado la venta seleccionada.",
-                    icon: "success",
-                    confirmButtonText: "Aceptar",
-                    confirmButtonColor: "#1e8449",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        refetch()
-                    }
-                }); 
-            }
+        return total;
+    };
 
-        } catch (error) {
-            
-        }
-    }
-
-    if(loading || loadingInsert || loadingCancel){
+    if(loading || loadingInsert){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -249,7 +245,6 @@ const CancelProcess = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg p-6">
-               
                 <div className="text-center mb-8">
                     <div className="flex justify-center items-center space-x-3 mb-4">
                         <div>
@@ -269,29 +264,45 @@ const CancelProcess = () => {
                         >
                             {data.getSaleByClient.status === 1? "Pendiente" : data.getSaleByClient.status === 0 ? "Liquidada" : "Cancelada"}
                         </span>
-                        <span className="text-3xl font-bold text-gray-800">{formatPrice(data.getSaleByClient.total)}</span>
+                        <span className="text-3xl font-bold text-gray-800">{data.getSaleByClient.status === 2? formatPrice(calculateTotal(data.getSaleByClient)): formatPrice(data.getSaleByClient.total)}</span>
                     </div>
                 </div>
 
                 <div className="mb-8">
                     <h2 className="text-xl font-bold text-gray-800 text-center mb-6">Productos</h2>
 
-                    {data.getSaleByClient.getProducts.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <svg
-                                className="w-16 h-16 mx-auto mb-4 text-gray-300"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v1M7 6V4a1 1 0 011-1h4a1 1 0 011 1v2"
-                                />
-                            </svg>
-                            <p className="text-lg">No hay productos en esta venta</p>
+                    {data.getSaleByClient.status === 2 ? (
+                        <div className="space-y-4 max-w-3xl mx-auto">
+                            {data.getSaleByClient.getCancelados.map((product) => {
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-lg bg-gray-50 space-y-4 sm:space-y-0"
+                                    >
+                                        <div className="flex items-center space-x-4 justify-center sm:justify-start">
+                                            <img
+                                                src={product.img_producto || "/placeholder.svg"}
+                                                alt={product.descripcion}
+                                                className="w-20 h-20 object-cover rounded-lg bg-gray-100 flex-shrink-0"
+                                            />
+                                            <div className="text-center sm:text-left">
+                                                <h3 className="font-semibold text-gray-800 text-lg">{product.descripcion}</h3>
+                                                <p className="text-gray-500">Cantidad: {product.cantidad}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-center sm:justify-end space-x-6">
+                                            <div className="text-center">
+                                                <p className="font-bold text-gray-800 text-lg">{formatPrice(product.precio)}</p>
+                                                <p className="text-sm text-gray-500">Unitario</p>
+                                                <p className="text-sm font-semibold text-gray-700">
+                                                    Total: {formatPrice(product.precio * product.cantidad)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     ) : (
                         <div className="space-y-4 max-w-3xl mx-auto">
