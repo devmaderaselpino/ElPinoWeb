@@ -61,9 +61,14 @@ export default function NewEmployeeForm() {
 
     const handleChange = (e) => {
         const { name, value } = e.target
+        
         setFormData({ ...formData, [name]: value })
 
-        if (errors[name]) {
+        if(name === "telefono"){
+            const onlyNums = e.target.value.replace(/\D/g, "");
+            setFormData({ ...formData, [name]: onlyNums })
+
+        }else {
             setErrors({ ...errors, [name]: "" })
         }
     }
@@ -74,6 +79,7 @@ export default function NewEmployeeForm() {
         if (!formData.apellidoPaterno) newErrors.apellidoPaterno = "El apellido paterno es obligatorio."
         if (!formData.apellidoMaterno) newErrors.apellidoMaterno = "El apellido materno es obligatorio."
         if (!formData.telefono) newErrors.telefono = "El teléfono es obligatorio."
+        if (formData.telefono.length < 10) newErrors.telefono = "El teléfono es inválido."
         if (!formData.municipio) newErrors.municipio = "El municipio es obligatorio."
         if (!formData.colonia) newErrors.colonia = "La colonia es obligatoria."
         if (!formData.calle) newErrors.calle = "La calle es obligatoria."
@@ -213,6 +219,7 @@ export default function NewEmployeeForm() {
                                 type="tel"
                                 id="telefono"
                                 name="telefono"
+                                maxLength={10}
                                 placeholder="Teléfono"
                                 value={formData.telefono}
                                 onChange={handleChange}

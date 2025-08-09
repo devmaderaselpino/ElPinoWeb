@@ -111,19 +111,25 @@ export default function EditEmployee() {
 
     const handleChange = (e) => {
         const { name, value } = e.target
+        
         setFormData({ ...formData, [name]: value })
 
-        if (errors[name]) {
+        if(name === "telefono"){
+            const onlyNums = e.target.value.replace(/\D/g, "");
+            setFormData({ ...formData, [name]: onlyNums })
+
+        }else {
             setErrors({ ...errors, [name]: "" })
         }
     }
-
+    
     const validate = () => {
         const newErrors = {}
         if (!formData.nombres) newErrors.nombres = "El nombre es obligatorio."
         if (!formData.apellidoPaterno) newErrors.apellidoPaterno = "El apellido paterno es obligatorio."
         if (!formData.apellidoMaterno) newErrors.apellidoMaterno = "El apellido materno es obligatorio."
         if (!formData.telefono) newErrors.telefono = "El teléfono es obligatorio."
+        if (formData.telefono.length < 10) newErrors.telefono = "El teléfono es inválido."
         if (!formData.municipio) newErrors.municipio = "El municipio es obligatorio."
         if (!formData.colonia) newErrors.colonia = "La colonia es obligatoria."
         if (!formData.calle) newErrors.calle = "La calle es obligatoria."
@@ -264,6 +270,7 @@ export default function EditEmployee() {
                                 type="tel"
                                 id="telefono"
                                 name="telefono"
+                                maxLength={10}
                                 placeholder="Teléfono"
                                 value={formData.telefono}
                                 onChange={handleChange}

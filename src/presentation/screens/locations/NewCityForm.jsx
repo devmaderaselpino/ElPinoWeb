@@ -10,14 +10,69 @@ const INSERT_CITY = gql`
     }
 `;
 
-const NewCityForm = () => {
+export default function NewCityForm() {
 
     const navigate = useNavigate();
 
-    const [city, setCity] = useState("")
-    const [errorCity, setErrorCity] = useState(false);
+    const [municipioName, setMunicipioName] = useState("");
+    const [error, setError] = useState("");
 
     const [insertCity, { loading: loadingUpdate}] = useMutation(INSERT_CITY);
+
+    const handleChange = (e) => {
+        setMunicipioName(e.target.value)
+        if (error) {
+            setError("")
+        }
+    }
+
+    const validate = () => {
+        if (!municipioName.trim()) {
+            setError("El nombre del municipio es obligatorio.")
+            return false
+        }
+        return true
+    }
+
+    const handleSubmit = async (e) => {
+        
+        e.preventDefault()
+        
+        if (validate()) {
+        
+            try {
+                const resp = await insertCity({
+                    variables: {
+                        nombre: municipioName
+                    }
+                });
+
+                if(resp.data.insertCity === "Municipio insertado"){
+                    Swal.fire({
+                        title: "¡Municipio agregado con éxito!",
+                        text: "Serás redirigido a la lista de ubicaciones.",
+                        icon: "success",
+                        confirmButtonText: "Aceptar",
+                        confirmButtonColor: "#1e8449",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            navigate(`/Ubicaciones`)
+                        }
+                    });
+                }
+
+            } catch (error) {
+                Swal.fire({
+                    title: "¡Ha ocurrido un error agregando el municipio!",
+                    text: "Inténtelo más tarde.",
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#922b21",
+                }); 
+            }
+        
+        }
+    }
 
     if(loadingUpdate){
         return (
@@ -28,91 +83,35 @@ const NewCityForm = () => {
         );
     }
 
-    const handleSubmit = async (e) => {
-        validateInput(city, setErrorCity);
-        e.preventDefault();
-
-
-        if(errorCity || !city){
-            return;
-        }
-        
-        try {
-            const resp = await insertCity({
-                variables: {
-                    nombre: city
-                }
-            });
-
-            if(resp.data.insertCity === "Municipio insertado"){
-                Swal.fire({
-                    title: "¡Municipio agregado con éxito!",
-                    text: "Serás redirigido a la lista de ubicaciones.",
-                    icon: "success",
-                    confirmButtonText: "Aceptar",
-                    confirmButtonColor: "#1e8449",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        navigate(`/Ubicaciones`)
-                    }
-                });
-            }
-
-        } catch (error) {
-            Swal.fire({
-                title: "¡Ha ocurrido un error agregando el municipio!",
-                text: "Inténtelo más tarde.",
-                icon: "error",
-                confirmButtonText: "Aceptar",
-                confirmButtonColor: "#922b21",
-            }); 
-        }
-    }
-    
-    const validateInput = (value, setError) => {
-        if( !value ) {
-            setError(true);
-        }else{
-            setError(false);
-        }
-    }
-
-    return(
-       <div className="flex justify-center items-center flex-col w-full h-screen">
-            <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:w-3/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Agregar Municipio</h2>
-                <div className="grid grid-cols-1 gap-6">
+    return (
+        <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+                <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">Agregar Municipio</h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="municipioName" className="block text-sm font-medium text-gray-700 mb-1">
                             Nombre municipio
                         </label>
-                        <div className="flex flex-col">
-                            <input
-                                type="text"
-                                id="city"
-                                name="city"
-                                value={city}
-                                onBlur={()=>{validateInput(city, setErrorCity)}}
-                                onChange={(e) => setCity(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                placeholder="Nombre municipio"
-                            />
-                            {errorCity ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                        </div>
-                    </div>   
-                </div>
-                <div>
+                        <input
+                            type="text"
+                            id="municipioName"
+                            name="municipioName"
+                            placeholder="Nombre municipio"
+                            value={municipioName}
+                            onChange={handleChange}
+                            className={`w-full px-3 py-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                        />
+                        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                    </div>
+
                     <button
-                        //onClick={handleSubmit}
                         type="submit"
-                        className="w-full cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
+                        className="w-full bg-[#166534] text-white py-3 rounded-md font-semibold hover:bg-green-800 transition-colors duration-200"
                     >
                         Guardar municipio
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    );
+    )
 }
-
-export default NewCityForm;
