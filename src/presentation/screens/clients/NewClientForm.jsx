@@ -44,6 +44,12 @@ const INSERT_CLIENT = gql`
     }
 `;
 
+const INSERT_VALIDATED_CLIENT = gql`
+    mutation InsertValidatedClient($input: ClientInput) {
+        insertValidatedClient(input: $input)
+    }
+`;
+
 export default function NewClientForm() {
 
     const navigate = useNavigate();
@@ -74,6 +80,7 @@ export default function NewClientForm() {
     const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
 
     const [insertClient, { loading: loadingInsert}] = useMutation(INSERT_CLIENT);
+    const [insertValidatedClient, { loading: loadingValidatedInsert}] = useMutation(INSERT_VALIDATED_CLIENT);
 
     const handleChange = (e) => {
         const { name, value, files } = e.target
@@ -144,27 +151,109 @@ export default function NewClientForm() {
                         }
                     }); 
 
-                }else {
-                    
-                    Swal.fire({
-                        title: "¡Se han encontrado coincidencias!",
-                        text: "",
-                        icon: "warning",
-                        confirmButtonText: "Aceptar",
-                        confirmButtonColor: "#1e8449",
-                    });
+                } else {
                 
+                    const clientesHTML = resp.data.insertClient
+                    .map(
+                        (cliente) => `
+                            <div style="text-align: left; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                <strong>Cliente:</strong> ${cliente.idCliente}<br>
+                                <strong>Nombre:</strong> ${cliente.nombre}<br>
+                                <strong>Apellido Paterno:</strong> ${cliente.aPaterno}<br>
+                                <strong>Apellido Materno:</strong> ${cliente.aMaterno}<br>
+                                <strong>Teléfono:</strong> ${cliente.celular}<br>
+                                <strong>Municipio:</strong> ${cliente.municipio_n}<br>
+                                <strong>Colonia:</strong> ${cliente.colonia_n}<br>
+                                <strong>Calle:</strong> ${cliente.calle}<br>
+                                <strong>Número Exterior:</strong> ${cliente.numero_ext}<br>
+                                <strong>Distinguido:</strong> ${cliente.distinguido ? "Sí" : "No"}
+                            </div>
+                        `,
+                    )
+                    .join("")
+
+                    Swal.fire({
+                        title: "Se han encontrado coincidencias",
+                        html: `
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                ${clientesHTML}
+                            </div>
+                        `,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#1e8449",
+                        cancelButtonColor: "#f39c12",
+                        confirmButtonText: "Continuar",
+                        cancelButtonText: "Regresar",
+                        reverseButtons:true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            handleTwoSubmit(e);
+                        }
+                    })
                 }
                 
             } catch (error) {
-                console.log(error);
+                Swal.fire({
+                    title: "¡Ha ocurrido un error agregando al cliente!",
+                    text: "Inténtelo más tarde.",
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#922b21",
+                }); 
             }
-            console.log("Formulario enviado:", formData)
-        
         }
     }
 
-    if(loadingColonias || loadingMunicipios || loadingInsert){
+    const handleTwoSubmit = async (e) => {
+        
+        e.preventDefault();
+
+        try {
+            const resp = await insertValidatedClient({
+                variables: {
+                    input: {
+                        aMaterno: formData.apellidoMaterno,
+                        aPaterno: formData.apellidoPaterno,
+                        calle: formData.calle,
+                        celular: formData.telefono,
+                        colonia: parseInt(formData.colonia),
+                        descripcion: formData.descripcion,
+                        distinguido: parseInt(formData.distinguido) === 2 ? 0 : 1,
+                        img_domicilio: fileName,
+                        municipio: parseInt(formData.municipio),
+                        nombre: formData.nombres,
+                        numero_ext: formData.numeroExterior 
+                    }
+                }
+            })
+    
+            if(resp.data.insertValidatedClient === "Cliente insertado"){
+
+                Swal.fire({
+                    title: "¡Cliente agregado con éxito!",
+                    text: "Serás redirigido a la lista de clientes.",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#1e8449",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/ListaClientes`)
+                    }
+                }); 
+            }
+        } catch (error) {
+            Swal.fire({
+                title: "¡Ha ocurrido un error agregando al cliente!",
+                text: "Inténtelo más tarde.",
+                icon: "error",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#922b21",
+            }); 
+        }
+    }
+
+    if(loadingColonias || loadingMunicipios || loadingInsert || loadingValidatedInsert){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -355,11 +444,6 @@ export default function NewClientForm() {
                                     <option value={1}>Sí</option>
                                     <option value={2}>No</option>
                                 </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                                    </svg>
-                                </div>
                             </div>
                             {errors.distinguido && <p className="text-red-500 text-sm mt-1">{errors.distinguido}</p>}
                         </div>
