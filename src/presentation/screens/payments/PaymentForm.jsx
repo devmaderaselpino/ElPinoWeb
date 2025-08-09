@@ -134,7 +134,7 @@ export default function PaymentForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p className="text-sm font-medium text-green-800">Para liquidar</p>
-                                <p className="text-2xl font-bold text-green-600">{formatPrice(data.getTotalsBySale.pendiente)}</p>
+                                <p className="text-2xl font-bold text-green-600">{ data.getTotalsBySale.pendiente > 0  ? formatPrice(data.getTotalsBySale.pendiente) : "$0.00"}</p>
                             </div>
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p className="text-sm font-medium text-black">Saldo mensual</p>
@@ -150,7 +150,7 @@ export default function PaymentForm() {
                             </div>
                         </div>
                     </div>
-
+                    
                     <form onSubmit={handleSubmit} className="px-6 py-6">
                         <div className="space-y-4">
                             <div>
@@ -160,6 +160,7 @@ export default function PaymentForm() {
                                 <input
                                     type="text"
                                     id="amount"
+                                    disabled={data.getTotalsBySale.pendiente <= 0}
                                     value={paymentAmount}
                                     onBlur={ () => {validateInput(paymentAmount, setErrorAbono)} }
                                     onChange={(e) => {
@@ -180,7 +181,7 @@ export default function PaymentForm() {
                         <div className="flex flex-col sm:flex-row gap-3 mt-6">
                             <button
                                 type="submit"
-                                disabled={!paymentAmount || Number.parseFloat(paymentAmount) <= 0}
+                                disabled={!paymentAmount || Number.parseFloat(paymentAmount) <= 0 || data.getTotalsBySale.pendiente <= 0}
                                 className="flex-1 bg-green-700 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-800"
                             >
                                 Aplicar Pago

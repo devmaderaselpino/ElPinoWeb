@@ -16,6 +16,7 @@ const GET_ABONOS = gql`
             abono
             tipo_abono
             cobrador
+            tipo
         }
     }
 `;

@@ -49,15 +49,19 @@ export function PaymentTable({ payments = [], onDelete }) {
                                 {payment.cobrador}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <button
-                                    className="text-primary-600 hover:text-primary-900 p-1 rounded-md hover:bg-primary-50"
-                                    title="Ver detalle"
-                                    onClick={ async () => {
-                                        await onDelete(payment.id)
-                                    }}
-                                >
+                                {payment.tipo === 1 ? 
+                                    <button
+                                        className="text-primary-600 hover:text-primary-900 p-1 rounded-md hover:bg-primary-50"
+                                        title="Ver detalle"
+                                        onClick={ async () => {
+                                            await onDelete(payment.id)
+                                        }}
+                                    >
                                     <Trash2 className="text-red-700 h-4 w-4" />
-                                </button>
+                                    </button>
+                                : 
+                                    null
+                                }
                             </td>
                         </tr>
                     ))}
