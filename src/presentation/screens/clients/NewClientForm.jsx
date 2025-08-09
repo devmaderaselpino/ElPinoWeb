@@ -82,13 +82,20 @@ export default function NewClientForm() {
     const [insertClient, { loading: loadingInsert}] = useMutation(INSERT_CLIENT);
     const [insertValidatedClient, { loading: loadingValidatedInsert}] = useMutation(INSERT_VALIDATED_CLIENT);
 
-    const handleChange = (e) => {
+    const handleChange = async (e) => {
         const { name, value, files } = e.target
+
         if (name === "archivo" && files) {
             setFormData({ ...formData, [name]: files[0] })
-            setFileName(files[0] ? files[0].name : "Sin archivos seleccionados")
-        } else {
+            setFileName(files[0] ? files[0].name : "Sin archivos seleccionados")        
+
+        }else if(name === "telefono"){
+            const onlyNums = e.target.value.replace(/\D/g, "");
+            setFormData({ ...formData, [name]: onlyNums })
+
+        }else {
             setFormData({ ...formData, [name]: value })
+
         }
 
         if (errors[name]) {
@@ -102,6 +109,7 @@ export default function NewClientForm() {
         if (!formData.apellidoPaterno) newErrors.apellidoPaterno = "El apellido paterno es obligatorio."
         if (!formData.apellidoMaterno) newErrors.apellidoMaterno = "El apellido materno es obligatorio."
         if (!formData.telefono) newErrors.telefono = "El teléfono es obligatorio."
+        if (formData.telefono.length < 10) newErrors.telefono = "El teléfono es inválido."
         if (!formData.municipio) newErrors.municipio = "El municipio es obligatorio."
         if (!formData.colonia) newErrors.colonia = "La colonia es obligatoria."
         if (!formData.calle) newErrors.calle = "La calle es obligatoria."
@@ -119,6 +127,27 @@ export default function NewClientForm() {
             setErrors(validationErrors)
         } else {
             try {
+                
+                let archivoN = "";
+
+                if(fileName){
+                    const data = new FormData()             
+                    
+                    data.append('file', formData.archivo)           
+                    data.append('upload_preset',"elpinotumbado")  
+                    
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/dqh6utbju/image/upload`, {
+                        method: 'POST',
+                        body: data
+                    });
+
+                    const file = await response.json();
+
+                    archivoN = file.secure_url;
+
+                    setFileName(archivoN);
+                }
+
                 const resp = await insertClient({
                     variables: {
                         input: {
@@ -129,7 +158,7 @@ export default function NewClientForm() {
                             colonia: parseInt(formData.colonia),
                             descripcion: formData.descripcion,
                             distinguido: parseInt(formData.distinguido) === 2 ? 0 : 1,
-                            img_domicilio: fileName,
+                            img_domicilio: archivoN,
                             municipio: parseInt(formData.municipio),
                             nombre: formData.nombres,
                             numero_ext: formData.numeroExterior 
@@ -263,8 +292,6 @@ export default function NewClientForm() {
     }
 
     if( errorColonias || errorMunicipios ) {
-        console.log(errorColonias);
-        
         return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
@@ -327,6 +354,7 @@ export default function NewClientForm() {
                                 type="tel"
                                 id="telefono"
                                 name="telefono"
+                                maxLength={10}
                                 placeholder="Teléfono"
                                 value={formData.telefono}
                                 onChange={handleChange}
@@ -416,14 +444,14 @@ export default function NewClientForm() {
                             </label>
                             <div className="flex items-center space-x-2">
                                 <label htmlFor="archivo" className="cursor-pointer text-green-600 font-medium hover:text-green-700">
-                                Seleccionar archivo
+                                    Seleccionar archivo
                                 </label>
                                 <input
-                                type="file"
-                                id="archivo"
-                                name="archivo"
-                                onChange={handleChange}
-                                className="hidden" // Hide the default file input
+                                    type="file"
+                                    id="archivo"
+                                    name="archivo"
+                                    onChange={handleChange}
+                                    className="hidden"
                                 />
                                 <span className="text-gray-500 text-sm">{fileName}</span>
                             </div>
@@ -466,7 +494,7 @@ export default function NewClientForm() {
 
                     <button
                         type="submit"
-                        className="w-full bg-[#166534] text-white py-3 rounded-md font-semibold hover:bg-green-800 transition-colors duration-200"
+                        className="w-full bg-green-800 text-white py-3 rounded-md font-semibold hover:bg-green-900 transition-colors duration-200"
                     >
                         Guardar cliente
                     </button>
