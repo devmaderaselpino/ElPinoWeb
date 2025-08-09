@@ -29,38 +29,29 @@ const INSERT_EMPLOYEE = gql`
     }
 `;
 
-const NewEmployeeForm = () => {
+export default function NewEmployeeForm() {
 
     const navigate = useNavigate();
     
-    const [name, setName] = useState("");
-    const [lastNameP, setLastNameP] = useState("");
-    const [lastNameM, setLastNameM] = useState("");
-    const [phone, setPhone] = useState("");
-    const [municipio, setMunicipio] = useState(0);
-    const [colonia, setColonia] = useState(0);
-    const [street, setStreet] = useState("");
-    const [number, setNumber] = useState("");
-    const [user, setUser] = useState("");
-    const [password, setPassword] = useState("");
-    const [type, setType] = useState(0);
+    const [formData, setFormData] = useState({
+        nombres: "",
+        apellidoPaterno: "",
+        apellidoMaterno: "",
+        telefono: "",
+        municipio: 0,
+        colonia: "",
+        calle: "",
+        numeroExterior: "",
+        usuario: "",
+        contrasena: "",
+        puesto: "",
+    });
 
-    const [errorName, setErrorName] = useState(false);
-    const [errorLastNameP, setErrorLastNameP] = useState(false);
-    const [errorLastNameM, setErrorLastNameM] = useState(false);
-    const [errorPhone, setErrorPhone] = useState(false);
-    const [errorPhoneT, setErrorPhoneT] = useState(false);
-    const [errorMunicipio, setErrorMunicipio] = useState(false);
-    const [errorColonia, setErrorColonia] = useState(false);
-    const [errorStreet, setErrorStreet] = useState(false);
-    const [errorNumber, setErrorNumber] = useState(false);
-    const [errorType, setErrorType] = useState(false);
-    const [errorUser, setErrorUser] = useState(false);
-    const [errorPassword, setErrorPassword] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
-            filter: parseInt(municipio)
+            filter: parseInt(formData.municipio)
         }, fetchPolicy: "network-only"
     });
     
@@ -68,76 +59,89 @@ const NewEmployeeForm = () => {
 
     const [insertEmployee, { loading: loadingInsert}] = useMutation(INSERT_EMPLOYEE);
 
-    const handleSubmit = async (e) => {
+    const handleChange = (e) => {
+        const { name, value } = e.target
+        setFormData({ ...formData, [name]: value })
 
-        e.preventDefault();
-
-        if(!name || !lastNameP || !lastNameM || !phone || phone.length < 10 || (municipio === 0 || municipio === "0") || (colonia === 0 || colonia === "0") || !street || !number || (type === 0 || type === "0") || !user || !password ){
-            
-            validateInput(name, setErrorName);
-            validateInput(lastNameP, setErrorLastNameP);
-            validateInput(lastNameM, setErrorLastNameM);
-            validatePhone(phone, setErrorPhone);
-            validateInput(municipio, setErrorMunicipio);
-            validateInput(colonia, setErrorColonia);
-            validateInput(street, setErrorStreet);
-            validateInput(number, setErrorNumber);
-            validateInput(password, setErrorPassword);
-            validateInput(user, setErrorUser);
-            validateInput(type, setErrorType);
-
-            return;
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: "" })
         }
-
-        try {
-            const resp = await insertEmployee({
-                variables: {
-                    input: {
-                        aMaterno: lastNameM,
-                        aPaterno: lastNameP,
-                        calle: street,
-                        celular: phone,
-                        colonia: parseInt(colonia),
-                        municipio: parseInt(municipio),
-                        nombre: name,
-                        numero_ext: number,
-                        usuario: user,
-                        password,
-                        tipo: parseInt(type)  
-                    }
-                }
-            })
-     
-            if(resp.data.insertEmployee ===  "Empleado insertado"){
-
-                Swal.fire({
-                    title: "Empleado agregado con éxito!",
-                    text: "Serás redirigido a la lista de empleados.",
-                    icon: "success",
-                    confirmButtonText: "Aceptar",
-                    confirmButtonColor: "#1e8449",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        navigate(`/ListaEmpleados`)
-                    }
-                }); 
-
-            }
-
-        } catch (error) {
-
-            Swal.fire({
-                title: "¡Ha ocurrido un error agregando al empleado!",
-                text: "Inténtelo más tarde.",
-                icon: "error",
-                confirmButtonText: "Aceptar",
-                confirmButtonColor: "#922b21",
-            }); 
-        }
-
     }
 
-    if(loadingColonias || loadingMunicipios || loadingInsert ){
+    const validate = () => {
+        const newErrors = {}
+        if (!formData.nombres) newErrors.nombres = "El nombre es obligatorio."
+        if (!formData.apellidoPaterno) newErrors.apellidoPaterno = "El apellido paterno es obligatorio."
+        if (!formData.apellidoMaterno) newErrors.apellidoMaterno = "El apellido materno es obligatorio."
+        if (!formData.telefono) newErrors.telefono = "El teléfono es obligatorio."
+        if (!formData.municipio) newErrors.municipio = "El municipio es obligatorio."
+        if (!formData.colonia) newErrors.colonia = "La colonia es obligatoria."
+        if (!formData.calle) newErrors.calle = "La calle es obligatoria."
+        if (!formData.numeroExterior) newErrors.numeroExterior = "El número exterior es obligatorio."
+        if (!formData.usuario) newErrors.usuario = "El usuario es obligatorio."
+        if (!formData.contrasena) newErrors.contrasena = "La contraseña es obligatoria."
+        if (!formData.puesto) newErrors.puesto = "El puesto es obligatorio."
+        return newErrors
+    }
+
+    const handleSubmit = async (e) => {
+        
+        e.preventDefault();
+
+        const validationErrors = validate();
+        
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors)
+        } else {
+            
+            try {
+                const resp = await insertEmployee({
+                    variables: {
+                        input: {
+                            aMaterno: formData.apellidoMaterno,
+                            aPaterno: formData.apellidoPaterno,
+                            calle: formData.calle,
+                            celular: formData.telefono,
+                            colonia: parseInt(formData.colonia),
+                            municipio: parseInt(formData.municipio),
+                            nombre: formData.nombres,
+                            numero_ext: formData.numeroExterior,
+                            usuario: formData.usuario,
+                            password: formData.contrasena,
+                            tipo: parseInt(formData.puesto)  
+                        }
+                    }
+                })
+     
+                if(resp.data.insertEmployee ===  "Empleado insertado"){
+
+                    Swal.fire({
+                        title: "Empleado agregado con éxito!",
+                        text: "Serás redirigido a la lista de empleados.",
+                        icon: "success",
+                        confirmButtonText: "Aceptar",
+                        confirmButtonColor: "#1e8449",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            navigate(`/ListaEmpleados`)
+                        }
+                    }); 
+
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: "¡Ha ocurrido un error agregando al empleado!",
+                    text: "Inténtelo más tarde.",
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                    confirmButtonColor: "#922b21",
+                }); 
+            }
+            
+        }
+    }
+
+    if(loadingColonias || loadingMunicipios || loadingInsert){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -150,121 +154,83 @@ const NewEmployeeForm = () => {
         return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
-    const validateInput = (value, setError) => {
-        if( !value || value === 0 || value === "0") {
-            setError(true);
-        }else{
-            setError(false);
-        }
-    }
-
-    const validatePhone = (value, setError) => {
-        if( !value) {
-            setError(true);
-            setErrorPhoneT("Campo obligatorio.");
-            return;
-        }if( value.length < 10) {
-            setError(true);
-            setErrorPhoneT("Número inválido.")
-            return;
-        }
-        else{
-            setError(false);
-        }
-    }
-
     return (
-        <>
-            <div className="flex justify-center items-center flex-col w-full h-screen">
-                <form onSubmit={handleSubmit} className="space-y-6 w-4/5 lg:rounded-lg lg:shadow-2xl md:rounded-lg md:shadow-2xl lg:p-10 md:p-10">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Registro de Empleado</h2>
+        <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
+                <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">Registro de Empleado</h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="nombres" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nombre(s)
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={name}
-                                    onBlur={()=>{validateInput(name, setErrorName)}}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Nombre(s)"
-                                />
-                                {errorName ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
-                        </div>   
+                            <input
+                                type="text"
+                                id="nombres"
+                                name="nombres"
+                                placeholder="Nombre(s)"
+                                value={formData.nombres}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.nombres ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.nombres && <p className="text-red-500 text-sm mt-1">{errors.nombres}</p>}
+                        </div>
                         <div>
-                            <label htmlFor="dadLastName" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="apellidoPaterno" className="block text-sm font-medium text-gray-700 mb-1">
                                 Apellido Paterno
                             </label>
-                            <div className="flex flex-col">    
-                                <input
-                                    type="text"
-                                    id="dadLastName"
-                                    name="dadLastName"
-                                    value={lastNameP}
-                                    onBlur={ () => {validateInput(lastNameP, setErrorLastNameP)} }
-                                    onChange={(e) => setLastNameP(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Apellido Paterno"
-                                />
-                                {errorLastNameP ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="text"
+                                id="apellidoPaterno"
+                                name="apellidoPaterno"
+                                placeholder="Apellido Paterno"
+                                value={formData.apellidoPaterno}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.apellidoPaterno ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.apellidoPaterno && <p className="text-red-500 text-sm mt-1">{errors.apellidoPaterno}</p>}
                         </div>
                         <div>
-                            <label htmlFor="momLastName" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="apellidoMaterno" className="block text-sm font-medium text-gray-700 mb-1">
                                 Apellido Materno
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="text"
-                                    id="momLastName"
-                                    name="momLastName"
-                                    value={lastNameM}
-                                    onBlur={ () => { validateInput(lastNameM, setErrorLastNameM) } }
-                                    onChange={(e) => setLastNameM(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Apellido Materno"
-                                />
-                                {errorLastNameM ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="text"
+                                id="apellidoMaterno"
+                                name="apellidoMaterno"
+                                placeholder="Apellido Materno"
+                                value={formData.apellidoMaterno}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.apellidoMaterno ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.apellidoMaterno && <p className="text-red-500 text-sm mt-1">{errors.apellidoMaterno}</p>}
                         </div>
                         <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
                                 Teléfono
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    name="phone"
-                                    maxLength={10}
-                                    value={phone}
-                                    onBlur={ () => { validatePhone(phone, setErrorPhone) } }
-                                    onChange={(e) => {
-                                        const onlyNums = e.target.value.replace(/\D/g, "");
-                                        setPhone(onlyNums);
-                                    }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Teléfono"
-                                />
-                                {errorPhone ? <span className="text-red-700 text-sm mt-2">{errorPhoneT}</span> : null}
-                            </div>
+                            <input
+                                type="tel"
+                                id="telefono"
+                                name="telefono"
+                                placeholder="Teléfono"
+                                value={formData.telefono}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.telefono ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
                         </div>
-                        <div className="relative">
-                            <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                            <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-1">
                                 Municipio
                             </label>
-                            <div className="flex flex-col">
+                            <div className="relative">
                                 <select
-                                    value={municipio}
-                                    onBlur={()=>{validateInput(municipio, setErrorMunicipio)}}
-                                    onChange={(e) => setMunicipio(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    id="municipio"
+                                    name="municipio"
+                                    value={formData.municipio}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border ${errors.municipio ? "border-red-500" : "border-gray-300"} rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
                                 >
                                     {dataMunicipios.getMunicipios.map((municipio) => (
                                         <option key={municipio.idMunicipio} value={municipio.idMunicipio}>
@@ -272,19 +238,20 @@ const NewEmployeeForm = () => {
                                         </option>
                                     ))}
                                 </select>
-                                {errorMunicipio ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
                             </div>
+                            {errors.municipio && <p className="text-red-500 text-sm mt-1">{errors.municipio}</p>}
                         </div>
-                        <div className="relative">
-                            <label htmlFor="colonia" className="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                            <label htmlFor="colonia" className="block text-sm font-medium text-gray-700 mb-1">
                                 Colonia
                             </label>
-                            <div className="flex flex-col">
+                            <div className="relative">
                                 <select
-                                    value={colonia}
-                                    onChange={(e) => setColonia(e.target.value)}
-                                    onBlur={()=>{validateInput(colonia, setErrorColonia)}}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                    id="colonia"
+                                    name="colonia"
+                                    value={formData.colonia}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border ${errors.colonia ? "border-red-500" : "border-gray-300"} rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
                                 >
                                     {dataColonias.getColonias.map((colonia) => (
                                         <option key={colonia.idColonia} value={colonia.idColonia}>
@@ -292,114 +259,100 @@ const NewEmployeeForm = () => {
                                         </option>
                                     ))}
                                 </select>
-                                {errorColonia ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
                             </div>
+                            {errors.colonia && <p className="text-red-500 text-sm mt-1">{errors.colonia}</p>}
                         </div>
                         <div>
-                            <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="calle" className="block text-sm font-medium text-gray-700 mb-1">
                                 Calle
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="text"
-                                    id="street"
-                                    name="street"
-                                    value={street}
-                                    onBlur={()=>{validateInput(street, setErrorStreet)}}
-                                    onChange={(e) => setStreet(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Calle"
-                                />
-                                {errorStreet ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="text"
+                                id="calle"
+                                name="calle"
+                                placeholder="Calle"
+                                value={formData.calle}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.calle ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.calle && <p className="text-red-500 text-sm mt-1">{errors.calle}</p>}
                         </div>
                         <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="numeroExterior" className="block text-sm font-medium text-gray-700 mb-1">
                                 Número Exterior
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="text"
-                                    id="number"
-                                    name="number"
-                                    value={number}
-                                    onBlur={()=>{validateInput(number, setErrorNumber)}}
-                                    onChange={(e) => setNumber(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Número exterior"
-                                />
-                                {errorNumber ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="text"
+                                id="numeroExterior"
+                                name="numeroExterior"
+                                placeholder="Número exterior"
+                                value={formData.numeroExterior}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.numeroExterior ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.numeroExterior && <p className="text-red-500 text-sm mt-1">{errors.numeroExterior}</p>}
                         </div>
                         <div>
-                            <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="usuario" className="block text-sm font-medium text-gray-700 mb-1">
                                 Usuario
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="text"
-                                    id="user"
-                                    name="user"
-                                    value={user}
-                                    onBlur={()=>{validateInput(user, setErrorUser)}}
-                                    onChange={(e) => setUser(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Usuario"
-                                />
-                                {errorUser ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="text"
+                                id="usuario"
+                                name="usuario"
+                                placeholder="Usuario"
+                                value={formData.usuario}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.usuario ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.usuario && <p className="text-red-500 text-sm mt-1">{errors.usuario}</p>}
                         </div>
                         <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="contrasena" className="block text-sm font-medium text-gray-700 mb-1">
                                 Contraseña
                             </label>
-                            <div className="flex flex-col">
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    value={password}
-                                    onBlur={()=>{validateInput(password, setErrorPassword)}}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                    placeholder="Contraseña"
-                                />
-                                {errorPassword ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
-                        </div>
-                        <div className="relative">
-                            <label htmlFor="municipio" className="block text-sm font-medium text-gray-700 mb-2">
-                                Puesto
-                            </label>
-                            <div className="flex flex-col">
-                                <select
-                                    value={type}
-                                    onBlur={()=>{validateInput(type, setErrorType)}}
-                                    onChange={(e) => setType(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm  focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                                >
-                                    <option value={0}>Seleccione una opción</option>
-                                    <option value={1}>Administrador</option>
-                                    <option value={2}>Oficina</option>
-                                    <option value={3}>Cobrador</option>
-                                </select>
-                                {errorType ? <span className="text-red-700 text-sm mt-2">Campo obligatorio.</span> : null}
-                            </div>
+                            <input
+                                type="password"
+                                id="contrasena"
+                                name="contrasena"
+                                placeholder="Contraseña"
+                                value={formData.contrasena}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.contrasena ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            />
+                            {errors.contrasena && <p className="text-red-500 text-sm mt-1">{errors.contrasena}</p>}
                         </div>
                     </div>
+
                     <div>
-                        <button
-                            //onClick={handleSubmit}
-                            type="submit"
-                            className="w-full cursor-pointer bg-green-800 text-white py-2 px-4 rounded-md hover:bg-green-900 transition duration-200 font-medium"
-                        >
-                            Guardar empleado
-                        </button>
+                        <label htmlFor="puesto" className="block text-sm font-medium text-gray-700 mb-1">
+                            Puesto
+                        </label>
+                        <div className="relative">
+                            <select
+                                id="puesto"
+                                name="puesto"
+                                value={formData.puesto}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border ${errors.puesto ? "border-red-500" : "border-gray-300"} rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
+                            >
+                                <option value={0}>Seleccione una opción</option>
+                                <option value={1}>Administrador</option>
+                                <option value={2}>Oficina</option>
+                                <option value={3}>Cobrador</option>
+                            </select>
+                        </div>
+                        {errors.puesto && <p className="text-red-500 text-sm mt-1">{errors.puesto}</p>}
                     </div>
+
+                    <button
+                        type="submit"
+                        className="w-full bg-green-800 text-white py-3 rounded-md font-semibold hover:bg-green-900 transition-colors duration-200"
+                    >
+                        Guardar empleado
+                    </button>
                 </form>
-            </div>  
-        </>
+            </div>
+        </div>
     )
 }
-
-export default NewEmployeeForm;
