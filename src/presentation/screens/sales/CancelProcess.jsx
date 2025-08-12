@@ -45,16 +45,34 @@ const EDIT_SALE = gql`
     }
 `;
 
+const INFO = gql`
+    query GetPorcentajePagado($idVenta: Int) {
+        getPorcentajePagado(idVenta: $idVenta) {
+            nombre
+            porcentaje_abonado
+            abonos_total
+        }
+    }
+`;
+
 const CancelProcess = () => {
 
     const {idVenta} = useParams();
 
     const [motivo, setMotivo] = useState(0);
 
+    const [saldo, setSaldo] = useState(0);
+
     const { loading, error, data, refetch } = useQuery(SALE, {
         variables: {
             idVenta: parseInt(idVenta)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
+    });
+
+    const { loading: loadingP, error: errorP, data: dataP, refetch: refetchP } = useQuery(INFO, {
+        variables: {
+            idVenta: parseInt(idVenta)
+        }, fetchPolicy:" no-cache"
     });
 
     const [editarVenta, { loadingInsert }] = useMutation(EDIT_SALE);
@@ -115,9 +133,11 @@ const CancelProcess = () => {
                 variables: {
                     input: {
                         productos: cancelaciones,
-                        historial: historial,
+                        historial,
                         idVenta: parseInt(idVenta),
-                        totalCancelado: calculateCancellationTotal()
+                        totalCancelado: calculateCancellationTotal(),
+                        opcion: parseInt(motivo),
+                        saldo: parseInt(saldo) === 1 ? dataP.getPorcentajePagado.abonos_total : 0
                     }
                 }
             })
@@ -132,7 +152,8 @@ const CancelProcess = () => {
                     confirmButtonColor: "#1e8449",
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        refetch()
+                        refetch(),
+                        refetchP()
                     }
                 }); 
                
@@ -263,17 +284,18 @@ const CancelProcess = () => {
         if (valor === 1) {
             
             setCancellationArray(mappedProducts);
+            setSaldo(0);
 
         } else if (valor === 2) {
             setCancellationArray(mappedProducts);
         
-        } else if (valor === 3) {
+        } else {
             setCancellationArray([]);
-        
+            setSaldo(0);
         } 
     };
 
-    if(loading || loadingInsert){
+    if(loading || loadingInsert || loadingP){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
@@ -282,7 +304,7 @@ const CancelProcess = () => {
         );
     }
 
-    if(error) {
+    if(error || errorP) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
@@ -296,7 +318,8 @@ const CancelProcess = () => {
                             <p className="text-md text-gray-500 mt-3">{format(new Date(parseInt(data.getSaleByClient.fecha)), "YYYY-MM-DD HH:mm")}</p>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6">
+                    <span className="text-md text-gray-500">{dataP.getPorcentajePagado.nombre}</span>
+                    <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 mt-3">
                         <span
                         className={`px-4 py-2 rounded-full text-sm font-medium ${
                             data.getSaleByClient.status === 1
@@ -311,7 +334,6 @@ const CancelProcess = () => {
                         <span className="text-3xl font-bold text-gray-800">{data.getSaleByClient.status === 2? formatPrice(calculateTotal(data.getSaleByClient)): formatPrice(data.getSaleByClient.total)}</span>
                     </div>
                 </div>
-
                 <div className="mb-8">
                     {data.getSaleByClient.status !== 2 ? 
                         <select
@@ -319,19 +341,46 @@ const CancelProcess = () => {
                             name="motivo"
                             value={motivo}
                             onChange={handleChange}
-                            className={`mb-10 w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
+                            className={`mb-6 w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
                         >
                             <option value={0}>Seleccione el motivo</option>
                             <option value={1}>Cancelación total - Cliente moroso</option>
-                            <option value={2}>Cancelación total - Cliente activo</option>
-                            <option value={3}>Cancelación parcial - Cliente activo</option>
+                            {dataP.getPorcentajePagado.porcentaje_abonado < 30 ? 
+                                <>
+                                    <option value={2}>Cancelación total - Cliente activo</option>
+                                    <option value={3}>Cancelación parcial - Cliente activo</option>
+                                </>
+                            : null}
                         </select>
                         
                     : 
                         null
                     }
-                    
-                    <h2 className="text-xl font-bold text-gray-800 text-center mb-6">Productos</h2>
+                    {dataP.getPorcentajePagado.abonos_total > 0 && motivo === 2 ? 
+                        <select
+                            id="saldo"
+                            name="saldo"
+                            value={saldo}
+                            onChange={(e) => setSaldo(e.target.value)}
+                            className={`mb-6 w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
+                        >
+                            <option value={0}>¿Desea agregar saldo a favor?</option>
+                            <option value={1}>Sí, guardar saldo a favor.</option>
+                            <option value={2}>No, no tomar en cuenta.</option>
+                        </select>
+                    :  
+                        null
+                    }
+                   
+                    {motivo === 2 && dataP.getPorcentajePagado.abonos_total > 0 ? 
+                        <div className="text-center">
+                            <span className="text-md text-gray-500">Saldo a favor: {formatPrice(dataP.getPorcentajePagado.abonos_total)}</span>
+                        </div>
+                    : 
+                        null
+                    }
+
+                    <h2 className="text-xl font-bold text-gray-800 text-center mb-6 mt-6">Productos</h2>
 
                     {data.getSaleByClient.status === 2 ? (
                         <div className="space-y-4 max-w-3xl mx-auto">
@@ -454,7 +503,10 @@ const CancelProcess = () => {
                     )}
                 </div>
                 
-                {cancellationArray.length > 0 && (
+                {(
+                    (cancellationArray.length > 0 && motivo !== 2) ||
+                    (cancellationArray.length > 0 && motivo === 2 && parseInt(saldo) !== 0)
+                )  && (
                     <div className="text-center mb-8">
                         <button
                         onClick={processCancellations}

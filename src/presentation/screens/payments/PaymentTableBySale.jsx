@@ -29,7 +29,7 @@ export default function PaymentTable() {
     const { loading, error, data } = useQuery(PAYMENT_TABLE, {
         variables: {
             idVenta: parseInt(idVenta)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     const getEstado = (pagado, fecha) => {

@@ -49,10 +49,10 @@ export default function EditDistrict() {
         variables: {
             idColonia: parseInt(idColonia)
         }, 
-        fetchPolicy: "network-only"
+        fetchPolicy: " no-cache"
     });
 
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
 
     const [updateDistrict, { loading: loadingUpdate}] = useMutation(UPDATE_DISTRICT);
 

@@ -48,7 +48,7 @@ const EmployeeDetails = () => {
     const { loading, error, data } = useQuery(EMPLOYEE_INFO, {
         variables: {
             idUsuario: parseInt(idUsuario)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     const [deleteEmployee, { loading: loadingDeleteEmployee}] = useMutation(DELETE_EMPLOYEE);

@@ -45,7 +45,7 @@ const EmployeesList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 
-    const [getEmployees, { loading, data, error }] = useLazyQuery(EMPLOYEES_LIST, {fetchPolicy:"network-only"});
+    const [getEmployees, { loading, data, error }] = useLazyQuery(EMPLOYEES_LIST, {fetchPolicy:" no-cache"});
 
     const [deleteEmployee, { loading: loadingDeleteEmployee}] = useMutation(DELETE_EMPLOYEE);
 

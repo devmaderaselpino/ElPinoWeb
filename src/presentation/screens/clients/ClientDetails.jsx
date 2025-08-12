@@ -43,6 +43,8 @@ const SALES_LIST = gql`
         getSalesByClient(input: $input) {
             idVenta
             total
+            subtotal
+            interes
             fecha
             usuario_reg
             idCliente
@@ -50,6 +52,7 @@ const SALES_LIST = gql`
             tipo
             getProducts {
                 id
+                idProducto
                 descripcion
                 cantidad
                 precio
@@ -87,13 +90,13 @@ const ClientDetails = () => {
     const { loading: loadingClient, error: errorClient, data: dataClient } = useQuery(CLIENT_INFO, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     const { loading: loadingSale, error: errorSale, data: dataSale } = useQuery(LAST_SALE, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     const { loading: loadingSales, error: errorSales, data: dataSales } = useQuery(SALES_LIST, {
@@ -102,13 +105,13 @@ const ClientDetails = () => {
                 idCliente: parseInt(idCliente),
                 status: statusFilter
             }
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:"no-cache"
     });
 
     const { loading: loadingStats, error: errorStats, data: dataStats } = useQuery(CLIENT_STATS, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     if(loadingClient || loadingSale || loadingSales || loadingStats){
@@ -123,7 +126,9 @@ const ClientDetails = () => {
     if(errorClient || errorSale || errorSales || errorStats) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-
+    
+    console.log(dataSales.getSalesByClient[1].getCancelados);
+    
     return(
         <div className="mt-10">
             <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10">

@@ -81,11 +81,11 @@ export default function SellProcess() {
 
     const [insertVenta, { loadingInsert }] = useMutation(INSERT_SALE);
 
-    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:"network-only"});
+    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:" no-cache"});
 
-    const { loading: loadingCategories, error: errorCategories, data: dataCategories } = useQuery(CATEGORIES_LIST, {fetchPolicy:"network-only"});
+    const { loading: loadingCategories, error: errorCategories, data: dataCategories } = useQuery(CATEGORIES_LIST, {fetchPolicy:" no-cache"});
 
-    const { loading: loadingProducts, error: errorProducts, data: dataProducts } = useQuery(PRODUCT_LIST, {fetchPolicy:"network-only", 
+    const { loading: loadingProducts, error: errorProducts, data: dataProducts } = useQuery(PRODUCT_LIST, {fetchPolicy:" no-cache", 
         variables: {
             categoria: parseInt(categoria),
             municipio: municipio

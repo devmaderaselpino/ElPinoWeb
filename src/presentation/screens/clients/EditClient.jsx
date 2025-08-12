@@ -76,16 +76,16 @@ export default function EditClient() {
     const { loading: loadingClient, error: errorClient, data: dataClient } = useQuery(CLIENT_INFO, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:"network-only"
+        }, fetchPolicy:" no-cache"
     });
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(formData.municipio)
-        }, fetchPolicy: "network-only"
+        }, fetchPolicy: " no-cache"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "network-only"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
 
     const [updateCliente, { loading: loadingUpdate}] = useMutation(UPDATE_CLIENT);
 
