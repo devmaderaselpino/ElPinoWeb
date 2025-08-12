@@ -49,6 +49,8 @@ const CancelProcess = () => {
 
     const {idVenta} = useParams();
 
+    const [motivo, setMotivo] = useState(0);
+
     const { loading, error, data, refetch } = useQuery(SALE, {
         variables: {
             idVenta: parseInt(idVenta)
@@ -148,13 +150,29 @@ const CancelProcess = () => {
     }
 
     const processCancellations = async () => {
-
+ 
         const mappedProducts = data.getSaleByClient.getProducts.map(product => ({
             idProducto: product.idProducto,
             idVenta: parseInt(idVenta),
             precio: product.precio,
             cantidad: product.cantidad,
         }));
+
+        const totalCantidad = mappedProducts.reduce((acc, obj) => acc + obj.cantidad, 0);
+        const totalCantidadCompra = cancellationArray.reduce((acc, obj) => acc + obj.cantidad, 0);
+
+        if(motivo === 3 && (totalCantidadCompra - totalCantidad) === 0){
+            
+            Swal.fire({
+                title: "No es posible cancelar todo en cancelación parcial.",
+                text: "Seleccione otra opción o reduzca las cancelaciones.",
+                icon: "warning",
+                confirmButtonColor: "#1e8449",
+                confirmButtonText: "Aceptar",
+            })
+            
+            return;
+        }
         
         if (cancellationArray.length === 0) {
             Swal.fire({
@@ -172,7 +190,9 @@ const CancelProcess = () => {
             <p class="font-semibold mb-3">Productos a cancelar:</p>
             ${cancellationArray
             .map((item) => {
+                console.log(item);
                 const product = data.getSaleByClient.getProducts.find((p) => p.id === item.idProducto)
+                console.log(product);
                 
                 return `
                 <div class="mb-2 p-2 bg-gray-50 rounded">
@@ -229,6 +249,30 @@ const CancelProcess = () => {
         return total;
     };
 
+    const handleChange = (e) => {
+        const valor = Number(e.target.value);
+        setMotivo(valor);
+
+        const mappedProducts = data.getSaleByClient.getProducts.map(product => ({
+            idProducto: product.id,
+            idVenta: parseInt(idVenta),
+            precio: product.precio,
+            cantidad: product.cantidad,
+        }));
+
+        if (valor === 1) {
+            
+            setCancellationArray(mappedProducts);
+
+        } else if (valor === 2) {
+            setCancellationArray(mappedProducts);
+        
+        } else if (valor === 3) {
+            setCancellationArray([]);
+        
+        } 
+    };
+
     if(loading || loadingInsert){
         return (
             <div className="min-h-screen flex items-center justify-center flex-col">
@@ -269,6 +313,24 @@ const CancelProcess = () => {
                 </div>
 
                 <div className="mb-8">
+                    {data.getSaleByClient.status !== 2 ? 
+                        <select
+                            id="motivo"
+                            name="motivo"
+                            value={motivo}
+                            onChange={handleChange}
+                            className={`mb-10 w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 pr-8`}
+                        >
+                            <option value={0}>Seleccione el motivo</option>
+                            <option value={1}>Cancelación total - Cliente moroso</option>
+                            <option value={2}>Cancelación total - Cliente activo</option>
+                            <option value={3}>Cancelación parcial - Cliente activo</option>
+                        </select>
+                        
+                    : 
+                        null
+                    }
+                    
                     <h2 className="text-xl font-bold text-gray-800 text-center mb-6">Productos</h2>
 
                     {data.getSaleByClient.status === 2 ? (
@@ -341,46 +403,49 @@ const CancelProcess = () => {
                                                 Total: {formatPrice(product.precio * product.cantidad)}
                                                 </p>
                                             </div>
-                                              
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => removeFromCancellationArray(product.id)}
-                                                    disabled={!canRemove}
-                                                    className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
-                                                        canRemove
-                                                        ? "text-green-600 hover:bg-green-50"
-                                                        : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                                    }`}
-                                                    title={canRemove ? "Regresar 1 unidad" : "No hay unidades para regresar"}
-                                                    >
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                                                        />
-                                                    </svg>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => addToCancellationArray(product.id, product.precio)}
-                                                    disabled={!canAddMore}
-                                                    className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
-                                                    canAddMore ? "text-red-600 hover:bg-red-50" : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                                    }`}
-                                                    title={canAddMore ? "Agregar 1 unidad a cancelar" : "No se pueden cancelar más unidades"}
-                                                >
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path
+                                            {motivo === 3 ? 
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() => removeFromCancellationArray(product.id)}
+                                                        disabled={!canRemove}
+                                                        className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
+                                                            canRemove
+                                                            ? "text-green-600 hover:bg-green-50"
+                                                            : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                                        }`}
+                                                        title={canRemove ? "Regresar 1 unidad" : "No hay unidades para regresar"}
+                                                        >
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
                                                             strokeLinecap="round"
                                                             strokeLinejoin="round"
                                                             strokeWidth={2}
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                                            d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                                                            />
+                                                        </svg>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => addToCancellationArray(product.id, product.precio)}
+                                                        disabled={!canAddMore}
+                                                        className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
+                                                        canAddMore ? "text-red-600 hover:bg-red-50" : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                                        }`}
+                                                        title={canAddMore ? "Agregar 1 unidad a cancelar" : "No se pueden cancelar más unidades"}
+                                                    >
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            : 
+                                                null
+                                            }
                                         </div>
                                     </div>
                                 )
@@ -388,6 +453,7 @@ const CancelProcess = () => {
                         </div>
                     )}
                 </div>
+                
                 {cancellationArray.length > 0 && (
                     <div className="text-center mb-8">
                         <button
