@@ -121,6 +121,15 @@ export default function EditClient() {
             const onlyNums = e.target.value.replace(/\D/g, "");
             setFormData({ ...formData, [name]: onlyNums })
 
+        }else if(name === "municipio"){
+            
+            setFormData({ ...formData, [name]: value })
+            
+            setFormData(prev => ({
+                ...prev,
+                colonia: 0
+            }));
+
         }else {
             setFormData({ ...formData, [name]: value })
 

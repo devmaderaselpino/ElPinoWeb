@@ -59,16 +59,27 @@ export default function NewEmployeeForm() {
 
     const [insertEmployee, { loading: loadingInsert}] = useMutation(INSERT_EMPLOYEE);
 
-    const handleChange = (e) => {
+     const handleChange = (e) => {
         const { name, value } = e.target
         
-        setFormData({ ...formData, [name]: value })
-
         if(name === "telefono"){
             const onlyNums = e.target.value.replace(/\D/g, "");
             setFormData({ ...formData, [name]: onlyNums })
 
+        }else if(name === "municipio"){
+            
+            setFormData({ ...formData, [name]: value })
+            
+            setFormData(prev => ({
+                ...prev,
+                colonia: 0
+            }));
+
         }else {
+           setFormData({ ...formData, [name]: value })
+        }
+
+        if (errors[name]) {
             setErrors({ ...errors, [name]: "" })
         }
     }

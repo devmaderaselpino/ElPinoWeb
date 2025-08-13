@@ -60,7 +60,7 @@ export default function NewClientForm() {
         apellidoMaterno: "",
         telefono: "",
         municipio: 0,
-        colonia: "",
+        colonia: 0,
         calle: "",
         numeroExterior: "",
         archivo: null,
@@ -92,6 +92,15 @@ export default function NewClientForm() {
         }else if(name === "telefono"){
             const onlyNums = e.target.value.replace(/\D/g, "");
             setFormData({ ...formData, [name]: onlyNums })
+
+        }else if(name === "municipio"){
+            
+            setFormData({ ...formData, [name]: value })
+            
+            setFormData(prev => ({
+                ...prev,
+                colonia: 0
+            }));
 
         }else {
             setFormData({ ...formData, [name]: value })
