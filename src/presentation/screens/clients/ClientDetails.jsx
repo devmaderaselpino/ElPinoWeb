@@ -126,9 +126,7 @@ const ClientDetails = () => {
     if(errorClient || errorSale || errorSales || errorStats) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-    
-    console.log(dataSales.getSalesByClient[1].getCancelados);
-    
+     
     return(
         <div className="mt-10">
             <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10">
