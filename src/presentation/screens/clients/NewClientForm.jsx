@@ -87,8 +87,8 @@ export default function NewClientForm() {
 
         if (name === "archivo" && files) {
             setFormData({ ...formData, [name]: files[0] })
-            setFileName(files[0] ? files[0].name : "Sin archivos seleccionados")        
-
+            setFileName(files[0] ? files[0].name : "Sin archivos seleccionados")
+        
         }else if(name === "telefono"){
             const onlyNums = e.target.value.replace(/\D/g, "");
             setFormData({ ...formData, [name]: onlyNums })
@@ -143,9 +143,9 @@ export default function NewClientForm() {
                     const data = new FormData()             
                     
                     data.append('file', formData.archivo)           
-                    data.append('upload_preset',"elpinotumbado")  
+                    data.append('upload_preset',"elpino")  
                     
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/dqh6utbju/image/upload`, {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/dv1kiff9a/image/upload`, {
                         method: 'POST',
                         body: data
                     });
