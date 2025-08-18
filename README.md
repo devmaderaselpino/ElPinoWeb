@@ -1,12 +1,25 @@
-# React + Vite
+# El Pino
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**El Pino** es una aplicación web para la gestión de abonos, inventarios y clientes, diseñada para facilitar el control de pagos y productos en negocios de cualquier tamaño.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Características
 
-## Expanding the ESLint configuration
+- Registro y seguimiento de **abonos** de clientes.
+- Control y actualización de **inventarios**.
+- Gestión de **clientes** con historial de pagos y productos adquiridos.
+- **Notificaciones** de pagos pendientes o próximos vencimientos.
+- **Reportes y estadísticas** en tiempo real.
+- Integración con **backend GraphQL** para consultas y actualizaciones en tiempo real.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Tecnologías
+
+- **Frontend:** React
+- **Gestión de datos:** Apollo Client con GraphQL
+- **Backend:** Node.js + GraphQL
+- **Estilos:** Tailwind CSS
+
+---
