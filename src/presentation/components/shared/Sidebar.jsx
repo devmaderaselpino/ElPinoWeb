@@ -4,20 +4,6 @@ import { Menu, X, Home, ShoppingCart, CreditCard, Users, Package, UserCheck, Map
 import logo from "../../../assets/logo3.png"
 import { AuthContext } from "../../../context/AuthContext";
 
-const navigation = [
-    { name: "Inicio", href: "/", icon: Home},
-    { name: "Venta", href: "/Venta", icon: ShoppingCart },
-    { name: "Tarjetas", href: "/#", icon: CreditCard },
-    { name: "Empleados", href: "/ListaEmpleados", icon: Users },
-    { name: "Inventario", href: "/Inventario", icon: Package },
-    { name: "Clientes", href: "/ListaClientes", icon: UserCheck },
-    { name: "Historial Abonos", href: "/Abonos", icon: HandCoins },
-    { name: "Historial Ventas", href: "/Ventas", icon: DollarSignIcon },
-    { name: "Ubicaciones", href: "/Ubicaciones", icon: MapPin },
-    { name: "Enrutado", href: "/Enrutado", icon: MapIcon },
-    { name: "Cerrar sesión", href: "#", icon: LogOut }
-]
-
 function classNames(...classes) {
     return classes.filter(Boolean).join(" ")
 }
@@ -42,7 +28,7 @@ export default function Sidebar() {
     const navigation = [
         { name: "Inicio", href: "/", icon: Home},
         { name: "Venta", href: "/Venta", icon: ShoppingCart },
-        { name: "Tarjetas", href: "/#", icon: CreditCard },
+        { name: "Tarjetas", href: "/Tarjetas", icon: CreditCard },
         { name: "Empleados", href: "/ListaEmpleados", icon: Users },
         { name: "Inventario", href: "/Inventario", icon: Package },
         { name: "Clientes", href: "/ListaClientes", icon: UserCheck },

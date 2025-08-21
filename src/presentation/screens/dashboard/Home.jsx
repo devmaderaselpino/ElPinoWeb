@@ -78,7 +78,7 @@ export default function Dashboard() {
 
     const { loading, data, error } = useQuery(INVENTARIO_INFO, 
         { 
-            fetchPolicy:" no-cache", 
+            fetchPolicy:"no-cache", 
             variables:{
                 tipo: activeTab
             }
@@ -87,7 +87,7 @@ export default function Dashboard() {
 
     const { loading: loadingSales, data: dataSales, error: errorSales } = useQuery(SALES_INFO, 
         { 
-            fetchPolicy:" no-cache", 
+            fetchPolicy:"no-cache", 
             variables:{
                 tipo: activeTab
             }
@@ -96,7 +96,7 @@ export default function Dashboard() {
 
     const { loading: loadingPayment, data: dataPayment, error: errorPayment } = useQuery(PAYMENT_INFO, 
         { 
-            fetchPolicy:" no-cache", 
+            fetchPolicy:"no-cache", 
             variables:{
                 tipo: activeTab
             }

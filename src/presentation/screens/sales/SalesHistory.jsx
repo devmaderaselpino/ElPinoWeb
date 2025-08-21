@@ -86,6 +86,7 @@ const SalesHistory = () => {
                 setTipoFilter={setTipoFilter}
                 dateRange={dateRange}
                 setDateRange={setDateRange}
+                setCurrentPage={setCurrentPage}
             />
 
             <SalesTable ventas={paginatedVentas} />

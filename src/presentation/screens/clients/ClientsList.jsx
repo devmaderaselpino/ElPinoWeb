@@ -61,15 +61,15 @@ const ClientsList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 
-    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:" no-cache"});
+    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:"network-only"});
     
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(municipio)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     useEffect(() => {
         loadClients({

@@ -20,6 +20,7 @@ const GET_PRODUCTOS_INVENTARIOS = gql`
     stock_escuinapa
     min_stock_escuinapa
     status
+    img_producto
   }
 }
 `;
@@ -171,7 +172,7 @@ const Inventory = () => {
     const { data, loading, error, refetch } = useQuery(GET_PRODUCTOS_INVENTARIOS);
     const { data: ajustesData, loading: ajustesLoading, error: ajustesError } = useQuery(GET_HISTORIAL_AJUSTES);
     
-    const { data: categoriasData, loading: categoriasLoading, error: categoriasError, refetch: refetchCategories } = useQuery(GET_CATEGORIAS);
+    const { data: categoriasData, loading: categoriasLoading, error: categoriasError, refetch: refetchCategories } = useQuery(GET_CATEGORIAS, {fetchPolicy:"no-cache"});
     const [updateProducto, { loading: updateLoading, error: updateError }] = useMutation(UPDATE_PRODUCTO, {
             onCompleted: (data) => {
             Swal.fire({
@@ -384,9 +385,9 @@ useEffect(() => {
             const files = e.target.files;
             const data = new FormData();
             data.append('file', files[0]);
-            data.append('upload_preset', 'elpinotumbado');
+            data.append('upload_preset', 'elpino');
 
-            const response = await fetch('https://api.cloudinary.com/v1_1/dqh6utbju/image/upload', {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/dv1kiff9a/image/upload`, {
             method: 'POST',
             body: data,
             });

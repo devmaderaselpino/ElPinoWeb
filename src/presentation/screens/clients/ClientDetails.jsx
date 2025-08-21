@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useQuery, gql } from '@apollo/client';
 import { Award, Download, Edit, CreditCard, Phone, User, MapPin, Calendar    } from 'lucide-react';
 import PurchaseHistory from "../../components/clients/PurchaseHistory";
-import archivo from '../../../assets/archivo.pdf';
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +27,7 @@ const CLIENT_INFO = gql`
             descripcion
             fecha_reg
             status
+            url
         }
     }
 `;
@@ -90,13 +90,13 @@ const ClientDetails = () => {
     const { loading: loadingClient, error: errorClient, data: dataClient } = useQuery(CLIENT_INFO, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const { loading: loadingSale, error: errorSale, data: dataSale } = useQuery(LAST_SALE, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const { loading: loadingSales, error: errorSales, data: dataSales } = useQuery(SALES_LIST, {
@@ -111,7 +111,7 @@ const ClientDetails = () => {
     const { loading: loadingStats, error: errorStats, data: dataStats } = useQuery(CLIENT_STATS, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     if(loadingClient || loadingSale || loadingSales || loadingStats){
@@ -126,7 +126,7 @@ const ClientDetails = () => {
     if(errorClient || errorSale || errorSales || errorStats) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
-     
+
     return(
         <div className="mt-10">
             <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10">
@@ -211,7 +211,7 @@ const ClientDetails = () => {
                     <button onClick={ ()=> { navigate(`/EditarCliente/${dataClient.getClient.idCliente}`)} } className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
                         <Edit size={18} />
                     </button>
-                    <a href={archivo} download target="_blank">
+                    <a href={dataClient.getClient.url} download target="_blank">
                         <button className="inline-flex items-center px-3 py-1 border bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
                             <Download size={18} />
                         </button>

@@ -45,7 +45,7 @@ const EmployeesList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const skip = (currentPage - 1) * itemsPerPage;
 
-    const [getEmployees, { loading, data, error }] = useLazyQuery(EMPLOYEES_LIST, {fetchPolicy:" no-cache"});
+    const [getEmployees, { loading, data, error }] = useLazyQuery(EMPLOYEES_LIST, {fetchPolicy:"no-cache"});
 
     const [deleteEmployee, { loading: loadingDeleteEmployee}] = useMutation(DELETE_EMPLOYEE);
 
@@ -362,25 +362,48 @@ const EmployeesList = () => {
                    
                 </div>
             </div>
-            {Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) > 1?  
-                <div className="hidden sm:flex justify-center items-center mt-16">
-                    {Array.from({ length: Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) }).map((_, index) => (
+
+            {Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) > 1 ? (
+                <div className="hidden sm:flex justify-center items-center mt-16 mb-10 gap-2">
+                    {Math.ceil(currentPage / 10) > 1 && (
                         <button
-                            key={index}
-                            onClick={() => setCurrentPage(index + 1)}
-                            className={`px-4 py-2 shadow-md rounded ${
-                            currentPage === index + 1
-                                ? 'bg-green-800 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
+                            onClick={() => setCurrentPage(Math.max(1, (Math.ceil(currentPage / 10) - 2) * 10 + 1))}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
                         >
-                            {index + 1}
+                            ...
                         </button>
-                    ))}
-                </div> 
-                : 
-                null
-            }
+                    )}
+        
+    
+                    {Array.from({ length: Math.min(10, Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) - Math.floor((currentPage - 1) / 10) * 10) })
+                        .map((_, index) => {
+                            const pageNumber = Math.floor((currentPage - 1) / 10) * 10 + index + 1;
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setCurrentPage(pageNumber)}
+                                    className={`px-4 py-2 shadow-md rounded ${
+                                    currentPage === pageNumber
+                                        ? 'bg-green-800 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })
+                    }
+                    {Math.ceil(currentPage / 10) < Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage / 10) && (
+                        <button
+                            onClick={() => setCurrentPage(Math.ceil(currentPage / 10) * 10 + 1)}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
+                        >
+                            ...
+                        </button>
+                    )}
+                </div>
+            ) : null}
+
             {Math.ceil(data?.getEmployeesPaginated?.total / itemsPerPage) > 1  ? 
                 <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">
                     <button className={`${currentPage !== 1 ? "bg-green-800" : "bg-gray-400" } hover:bg-green-900 text-white font-semibold p-3 rounded-lg shadow-lg flex items-center gap-2`}

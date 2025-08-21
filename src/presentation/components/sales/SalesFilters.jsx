@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Filter, Calendar, Printer } from 'lucide-react';
 
-const SalesFilters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter, tipoFilter, setTipoFilter, dateRange, setDateRange, ventas = []}) => {
+const SalesFilters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter, tipoFilter, setTipoFilter, dateRange, setDateRange, setCurrentPage, ventas = []}) => {
     const handlePrint = () => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
@@ -140,7 +140,7 @@ const SalesFilters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter
 
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1)}}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 >
                     <option value="todos">Todos los estados</option>

@@ -66,13 +66,13 @@ const CancelProcess = () => {
     const { loading, error, data, refetch } = useQuery(SALE, {
         variables: {
             idVenta: parseInt(idVenta)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const { loading: loadingP, error: errorP, data: dataP, refetch: refetchP } = useQuery(INFO, {
         variables: {
             idVenta: parseInt(idVenta)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const [editarVenta, { loadingInsert }] = useMutation(EDIT_SALE);

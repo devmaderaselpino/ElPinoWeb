@@ -74,16 +74,16 @@ export default function EditEmployee() {
     const { loading, error, data } = useQuery(EMPLOYEE_INFO, {
             variables: {
                 idUsuario: parseInt(idUsuario)
-            }, fetchPolicy: " no-cache"
+            }, fetchPolicy: "no-cache"
     });
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(formData.municipio)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     const [editEmployee, { loading: loadingUpdate}] = useMutation(EDIT_EMPLOYEE);
 

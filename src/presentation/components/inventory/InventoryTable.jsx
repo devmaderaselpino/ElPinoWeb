@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, AlertTriangle, Wrench, Pencil, Trash2, ShieldCheck, Trash } from 'lucide-react';
 import Swal from "sweetalert2";
+import formatPrice from '../../../functions/FormatPrice';
 
 const InventoryTable = ({
     products,
@@ -17,12 +18,6 @@ const InventoryTable = ({
         return categoryName || 'Desconocida';
     };
     
-    const formatPrice = (price) =>
-        new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-        }).format(price);
-
     const isLowStock = (stock, minStock) => stock < minStock;
 
     const getStockBadgeColor = (stock, minStock) => {
@@ -30,10 +25,11 @@ const InventoryTable = ({
         if (stock < minStock) return 'bg-yellow-100 text-yellow-800';
         return 'bg-gray-100 text-gray-800';
     };
+    
     const handleEditClick = (product) => {
  
         onEditProduct(product);
-        };
+    };
 
     return (
         <div className="bg-white rounded-lg shadow-xl p-4">
@@ -41,7 +37,7 @@ const InventoryTable = ({
                 <table className="w-full table-auto">
                     <thead className="bg-gray-50 border-b">
                         <tr>
-                            <th className="px-2 py-4 text-left text-xs font-medium text-gray-500 uppercase w-20">
+                            <th className="px-2 py-4 text-left text-xs font-medium text-gray-500 uppercase w-900">
                                 Imagen
                             </th>
                             <th className="px-2 py-4 text-left text-xs font-medium text-gray-500 uppercase w-20">

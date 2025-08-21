@@ -104,7 +104,7 @@ const PurchaseItem = ({ purchase }) => {
                         <div className="mt-4 pt-4 border-t border-slate-200">
                             <h4 className="font-semibold text-slate-800 mb-3">Productos</h4>
                             <div className="space-y-3">
-                                {purchase.status === 2 ? (
+                                {purchase.status === 2 && purchase.getCancelados.length > 0 ? (
                                     purchase.getCancelados.map((item) => (
                                         <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg bg-slate-50">
                                             <img 

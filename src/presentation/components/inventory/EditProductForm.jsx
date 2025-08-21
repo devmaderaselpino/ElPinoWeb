@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Package } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-
 const EditProductForm = ({ onSave, onCancel, categories, imgUrl, onUploadImage, clearImage, initialValues }) => {
     const [formData, setFormData] = useState({
         descripcion: '',
@@ -13,98 +12,100 @@ const EditProductForm = ({ onSave, onCancel, categories, imgUrl, onUploadImage, 
         min_stock_escuinapa: '5',
     });
     const [errors, setErrors] = useState({});
-    const [selectedImage, setSelectedImage] = useState(null);  // Estado para la imagen seleccionada
+    const [selectedImage, setSelectedImage] = useState(null);  
 
     useEffect(() => {
         if (initialValues) {
+            const categoriaSeleccionada = categories.find(cat => cat.descripcion === initialValues.categoria);
+
             setFormData({
                 descripcion: initialValues.descripcion || '',
-                categoria: initialValues.categoria || '',
+                categoria: categoriaSeleccionada ? categoriaSeleccionada.idCategoria : '',  // Aquí asignas el idCategoria
                 precio: initialValues.precio || '',
-                img_producto: initialValues.img_producto || '',  // Se toma la imagen actual si existe
+                img_producto: initialValues.img_producto || '',
                 min_stock_rosario: initialValues.min_stock_rosario || '',
                 min_stock_escuinapa: initialValues.min_stock_escuinapa || '',
             });
-            setSelectedImage(initialValues.img_producto || null);  // Si ya existe una imagen, se establece en el estado
+            setSelectedImage(initialValues.img_producto || null); 
         }
-    }, [initialValues]);
+    }, [initialValues, categories]);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };
-      useEffect(() => {
-             if (imgUrl) {
-                 setFormData(prev => ({
-                     ...prev,
-                     img_producto: imgUrl
-                 }));
-             }
-         }, [imgUrl]);
-    // Función para manejar la selección de imagen
+
+    useEffect(() => {
+        if (imgUrl) {
+            setFormData(prev => ({
+                ...prev,
+                img_producto: imgUrl
+            }));
+        }
+    }, [imgUrl]);
+
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setSelectedImage(reader.result);  // Establecer la imagen seleccionada para previsualizarla
-                onUploadImage(e);  // Llamar a la función de subida de imagen
+                setSelectedImage(reader.result);  
+                onUploadImage(e); 
             };
-            reader.readAsDataURL(file);  // Leer la imagen como una URL
+            reader.readAsDataURL(file);  
         }
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
+        e.preventDefault();
+        const newErrors = {};
 
-    if (!formData.descripcion.trim()) newErrors.descripcion = 'La descripción es obligatoria';
-    if (!formData.img_producto && !initialValues.img_producto) newErrors.img_producto = 'La imagen es obligatoria';  // Solo validar si no hay imagen nueva ni anterior
-    const categoriaInt = parseInt(formData.categoria, 10);
-    if (!categoriaInt) newErrors.categoria = 'Selecciona una categoría';
+        if (!formData.descripcion.trim()) newErrors.descripcion = 'La descripción es obligatoria';
+        if (!formData.img_producto && !initialValues.img_producto) newErrors.img_producto = 'La imagen es obligatoria';  // Solo validar si no hay imagen nueva ni anterior
+        const categoriaInt = parseInt(formData.categoria, 10);
+        if (!categoriaInt) newErrors.categoria = 'Selecciona una categoría';
 
-    if (!formData.precio || parseFloat(formData.precio) <= 0) {
-        newErrors.precio = 'El precio es obligatorio y debe ser mayor a 0';
-    }
+        if (!formData.precio || parseFloat(formData.precio) <= 0) {
+            newErrors.precio = 'El precio es obligatorio y debe ser mayor a 0';
+        }
 
-    if (formData.min_stock_rosario <= 0) {
-        newErrors.min_stock_rosario = 'Debe ser mayor a 0';
-    }
-    if (formData.min_stock_escuinapa <= 0) {
-        newErrors.min_stock_escuinapa = 'Debe ser mayor a 0';
-    }
+        if (formData.min_stock_rosario <= 0) {
+            newErrors.min_stock_rosario = 'Debe ser mayor a 0';
+        }
+        if (formData.min_stock_escuinapa <= 0) {
+            newErrors.min_stock_escuinapa = 'Debe ser mayor a 0';
+        }
 
-    if (Object.keys(newErrors).length > 0) return setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return setErrors(newErrors);
 
+        const updatedData = {
+            idProducto: initialValues.idProducto, 
+            descripcion: formData.descripcion,
+            categoria: categoriaInt,
+            precio: parseFloat(formData.precio),
+            img_producto: formData.img_producto || initialValues.img_producto,  
+            min_stock_rosario: Number(formData.min_stock_rosario),
+            min_stock_escuinapa: Number(formData.min_stock_escuinapa),
+        };
 
-    const updatedData = {
-        idProducto: initialValues.idProducto, 
-        descripcion: formData.descripcion,
-        categoria: categoriaInt,
-        precio: parseFloat(formData.precio),
-        img_producto: formData.img_producto || initialValues.img_producto,  
-        min_stock_rosario: Number(formData.min_stock_rosario),
-        min_stock_escuinapa: Number(formData.min_stock_escuinapa),
+        onSave(updatedData);
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Producto actualizado',
+            text: 'El producto fue actualizado correctamente.',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded',
+            },
+            buttonsStyling: false
+        });
+
+        setErrors({});
+        clearImage();
+        onCancel();
     };
-
-    
-    onSave(updatedData);
-
-    await Swal.fire({
-        icon: 'success',
-        title: 'Producto actualizado',
-        text: 'El producto fue actualizado correctamente.',
-        confirmButtonText: 'OK',
-        customClass: {
-            confirmButton: 'bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded',
-        },
-        buttonsStyling: false
-    });
-
-    setErrors({});
-    clearImage();
-    onCancel();
-};
 
     return (
         <div className="fixed inset-0 backdrop-blur-sm bg-transparent flex items-center justify-center p-4 z-50">
@@ -152,28 +153,28 @@ const EditProductForm = ({ onSave, onCancel, categories, imgUrl, onUploadImage, 
 
                   <div>
                     <label className="block text-sm text-gray-700">Imagen</label>
-                    {/* Input para cargar nueva imagen */}
+                
                     <input
                         type="file"
-                        onChange={handleImageChange}  // Actualizar previsualización
+                        onChange={handleImageChange}  
                         className={`w-full mt-1 p-2 border rounded ${errors.img_producto ? 'border-red-500' : 'border-gray-300'}`}
                     />
                     {errors.img_producto && (
                         <p className="text-xs text-red-500 mt-1">{errors.img_producto}</p>
                     )}
 
-                    {/* Si ya existe una imagen guardada, la mostramos debajo del input */}
+                    
                     {selectedImage && (
                         <div className="mt-2">
                             <img
-                                src={selectedImage}  // Mostrar imagen seleccionada
+                                src={selectedImage}  
                                 alt="Imagen actual"
                                 className="w-32 h-32 object-cover rounded"
                             />
                         </div>
                     )}
 
-                    {/* Mostrar imagen actual si no se seleccionó una nueva */}
+                   
                     {!selectedImage && initialValues && initialValues.img_producto && (
                         <div className="mt-2 text-sm text-gray-600">
                             <span>Imagen actual: </span>

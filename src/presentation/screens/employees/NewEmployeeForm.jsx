@@ -52,10 +52,10 @@ export default function NewEmployeeForm() {
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(formData.municipio)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     const [insertEmployee, { loading: loadingInsert}] = useMutation(INSERT_EMPLOYEE);
 

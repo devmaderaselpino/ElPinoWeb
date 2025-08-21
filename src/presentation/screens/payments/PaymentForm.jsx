@@ -40,7 +40,7 @@ export default function PaymentForm() {
     const { loading, error, data } = useQuery(SALE_INFO, {
         variables: {
             idVenta: parseInt(idVenta)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const handleSubmit = async (e) => {

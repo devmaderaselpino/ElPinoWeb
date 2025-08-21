@@ -24,6 +24,7 @@ import PaymentTable from "../screens/payments/PaymentTableBySale"
 import PaymentForm from "../screens/payments/PaymentForm"
 import Inventario from "../screens/inventory/Inventory"
 import CancelProcess from "../screens/sales/CancelProcess"
+import Tarjetas from '../screens/cards/CollectorsList';
 
 const MainNavigation = () => {
     const location = useLocation();
@@ -59,6 +60,7 @@ const MainNavigation = () => {
                         <Route path="/TablaPagos/:idVenta" element={<PaymentTable />} />
                         <Route path="/AplicarAbono/:idVenta" element={<PaymentForm />} />
                         <Route path="/Cancelaciones/:idVenta" element={<CancelProcess />} />
+                        <Route path="/Tarjetas" element={<Tarjetas/>} />
                     </Route>
                 </Routes>
             </div>

@@ -74,10 +74,10 @@ export default function NewClientForm() {
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(formData.municipio)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
 
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     const [insertClient, { loading: loadingInsert}] = useMutation(INSERT_CLIENT);
     const [insertValidatedClient, { loading: loadingValidatedInsert}] = useMutation(INSERT_VALIDATED_CLIENT);

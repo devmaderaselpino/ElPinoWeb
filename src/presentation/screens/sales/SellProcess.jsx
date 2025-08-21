@@ -35,6 +35,7 @@ const CLIENTS_LIST = gql`
                 descripcion
                 fecha_reg
                 status
+                saldo_favor
             }
         }
     }
@@ -78,14 +79,15 @@ export default function SellProcess() {
     const [isPremium, setIsPremium] = useState(false);
     const [municipio, setMunicipio] = useState(1);
     const [nombre, setNombre] = useState("");
+    const [saldo, setSaldo] = useState(0);
 
     const [insertVenta, { loadingInsert }] = useMutation(INSERT_SALE);
 
-    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:" no-cache"});
+    const [loadClients, { data: dataClients, loading: loadingClients, error: errorClients }] = useLazyQuery(CLIENTS_LIST,  {fetchPolicy:"network-only"});
 
-    const { loading: loadingCategories, error: errorCategories, data: dataCategories } = useQuery(CATEGORIES_LIST, {fetchPolicy:" no-cache"});
+    const { loading: loadingCategories, error: errorCategories, data: dataCategories } = useQuery(CATEGORIES_LIST, {fetchPolicy:"no-cache"});
 
-    const { loading: loadingProducts, error: errorProducts, data: dataProducts } = useQuery(PRODUCT_LIST, {fetchPolicy:" no-cache", 
+    const { loading: loadingProducts, error: errorProducts, data: dataProducts } = useQuery(PRODUCT_LIST, {fetchPolicy:"no-cache", 
         variables: {
             categoria: parseInt(categoria),
             municipio: municipio
@@ -164,7 +166,15 @@ export default function SellProcess() {
     }
 
     const getTotalAmount = () => {
-        return Math.ceil(cart.reduce((total, item) => total + item.precio * item.quantity, 0) * 1.43)
+        
+        const cantidad = Math.ceil(cart.reduce((total, item) => total + item.precio * item.quantity, 0) * 1.43);
+        
+        const abajo = Math.floor((cantidad - 90) / 100) * 100 + 90;
+       
+        const arriba = abajo + 100;
+
+        return (cantidad - abajo <= arriba - cantidad) ? abajo : arriba;
+
     }
 
     const getMonthlyPayment = (months) => {
@@ -245,7 +255,7 @@ export default function SellProcess() {
             const resp = await insertVenta({
                 variables: {
                     input: {
-                        total:  tipoCompra === 1 ? getTotalAmountContado() : getTotalAmount(),
+                        total:  tipoCompra === 1 ? getTotalAmountContado() - saldo : getTotalAmount() - saldo,
                         idCliente: selectedClient,
                         tipo: tipoCompra,
                         productos: products,
@@ -355,7 +365,9 @@ export default function SellProcess() {
                                         setCurrentProductIndex(0);
                                         setSelectedClient(client.idCliente);
                                         setNombre(client.nombre + " " + client.aPaterno + " " + client.aMaterno);
-                                        setMunicipio(client.municipio); 
+                                        setMunicipio(client.municipio);
+                                        setSaldo(client.saldo_favor);
+
                                         if(client.distinguido === 1){
                                             setIsPremium(true);
                                         }else{
@@ -464,7 +476,7 @@ export default function SellProcess() {
                                         </div>
                                     </div>
                                 ))}
-                                <div className="pt-2 font-bold text-lg">Total: {formatPrice(getTotalAmount())}</div>
+                                <div className="pt-2 font-bold text-lg">Total: {formatPrice(getTotalAmountContado())}</div>
                             </div>
                         )}
                     </div>
@@ -567,7 +579,6 @@ export default function SellProcess() {
                             <h3 className="font-semibold text-lg mb-2">Cliente:</h3>
                             <p className="text-lg">{nombre}</p>
                         </div>
-
                         <div className="mb-6">
                             <h3 className="font-semibold text-lg mb-2">Productos:</h3>
                             {cart.map((item) => (
@@ -602,9 +613,17 @@ export default function SellProcess() {
                                 <span>Enganche:</span>
                                 <span>{formatPrice(enganche)}</span>
                             </div>
+                            {saldo > 0 ? 
+                                <div className="flex justify-between text-md font-bold mb-2">
+                                    <span>Saldo a favor:</span>
+                                    <span>{formatPrice(saldo)}</span>
+                                </div>
+                            : 
+                                null
+                            }
                             <div className="flex justify-between text-xl font-bold mb-2">
                                 <span>Total:</span>
-                                <span>{paymentPlan !== 1 && paymentPlan ? formatPrice(getTotalAmount() - enganche) : formatPrice(getTotalAmountContado())}</span>
+                                <span>{paymentPlan !== 1 && paymentPlan ? formatPrice(getTotalAmount() - enganche - saldo) : formatPrice(getTotalAmountContado() - saldo)}</span>
                             </div>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../../components/shared/Loading";
 import ErrorPage from "../../components/shared/ErrorPage";
+import { Trash } from "lucide-react";
 
 const CLIENT_INFO = gql`
     query GetClient($idCliente: Int) {
@@ -22,6 +23,7 @@ const CLIENT_INFO = gql`
             distinguido
             img_domicilio
             descripcion
+            url
         }
     }
 `;
@@ -50,6 +52,15 @@ const UPDATE_CLIENT = gql`
     }
 `;
 
+const SAVE_ARCHIVO_CLIENTE = gql`
+    mutation UpdateArchivo($idCliente: Int!, $archivo: String!) {
+        updateArchivoCliente(idCliente: $idCliente, archivo: $archivo) {
+            id
+            archivo
+        }
+    }
+`;
+
 export default function EditClient() {
 
     const navigate = useNavigate();
@@ -67,28 +78,33 @@ export default function EditClient() {
         numeroExterior: "",
         archivo: null,
         distinguido: "",
-        descripcion: "",
+        descripcion: ""
     })
 
+    const [pdfFile, setPdfFile] = useState(null);
+    const [namePDF, setNamePDF] = useState("");
+    const [pdfUploading, setPdfUploading] = useState(false);
+
     const [errors, setErrors] = useState({});
-    const [fileName, setFileName] = useState("Sin archivos seleccionados");
+    const [fileName, setFileName] = useState("");
 
     const { loading: loadingClient, error: errorClient, data: dataClient } = useQuery(CLIENT_INFO, {
         variables: {
             idCliente: parseInt(idCliente)
-        }, fetchPolicy:" no-cache"
+        }, fetchPolicy:"no-cache"
     });
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {
             filter: parseInt(formData.municipio)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
     
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     const [updateCliente, { loading: loadingUpdate}] = useMutation(UPDATE_CLIENT);
 
+    const [saveArchivoCliente] = useMutation(SAVE_ARCHIVO_CLIENTE);
 
     useEffect( () =>{
         if(dataClient){
@@ -103,19 +119,70 @@ export default function EditClient() {
                 numeroExterior: dataClient.getClient.numero_ext,
                 distinguido: dataClient.getClient.distinguido === 0 ? 2 : 1,
                 descripcion: dataClient.getClient.descripcion,
-                archivo: dataClient.getClient.img_domicilio || null, 
+                archivo: dataClient.getClient.img_domicilio || null
             };
+
+            setNamePDF(dataClient.getClient.url)
 
             setFormData(datosActualizados)
         }
     },[dataClient])
+
+    const onPdfChange = (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+
+        if (f.type !== "application/pdf") {
+            Swal.fire("Archivo inválido", "Solo PDFs, porfa.", "warning");
+            return;
+        }
+
+        const MAX = 15 * 1024 * 1024;
+        if (f.size > MAX) {
+           
+            Swal.fire("Archivo muy grande", "Máximo 15 MB.", "warning");
+            return;
+        }
+
+        setPdfFile(f);
+        setNamePDF(f.name);
+        
+    };
+
+    const uploadPdfToR2AndSave = async (idCli) => {
+        if (!pdfFile) return;
+
+        setPdfUploading(true);
+        
+        try {
+            const fd = new FormData();
+                fd.append("file", pdfFile);
+                const r = await fetch("https://backendelpino-production-713d.up.railway.app/upload/pdf", {
+                method: "POST",
+                body: fd,
+            });
+
+            if (!r.ok) {
+                const t = await r.text();
+                throw new Error(`Backend upload failed: ${t}`);
+            }
+
+            const { key } = await r.json();
+
+            await saveArchivoCliente({
+                variables: { idCliente: parseInt(idCli), archivo: key },
+            });
+        } finally {
+            setPdfUploading(false);
+        }
+    };
 
     const handleChange = async (e) => {
         const { name, value, files } = e.target
 
         if (name === "archivo" && files) {
             setFormData({ ...formData, [name]: files[0] })
-            setFileName(files[0] ? files[0].name : "Sin archivos seleccionados")        
+            setFileName(files[0] ? files[0].name : "")        
 
         }else if(name === "telefono"){
             const onlyNums = e.target.value.replace(/\D/g, "");
@@ -165,15 +232,19 @@ export default function EditClient() {
         } else {
             try {
                 
-                let archivoN = "";
+                let archivoN = dataClient.getClient.img_domicilio;
+
+                if(pdfFile){
+                    await uploadPdfToR2AndSave(parseInt(idCliente));
+                }
 
                 if(fileName){
                     const data = new FormData()             
                     
                     data.append('file', formData.archivo)           
-                    data.append('upload_preset',"elpinotumbado")  
+                    data.append('upload_preset',"elpino")  
                     
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/dqh6utbju/image/upload`, {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/dv1kiff9a/image/upload`, {
                         method: 'POST',
                         body: data
                     });
@@ -217,6 +288,8 @@ export default function EditClient() {
                 }
                 
             } catch (error) {
+                console.log(error);
+                
                 Swal.fire({
                     title: "¡Ha ocurrido un error agregando al cliente!",
                     text: "Inténtelo más tarde.",
@@ -385,22 +458,65 @@ export default function EditClient() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="archivo" className="block text-sm font-medium text-gray-700 mb-1">
-                                Archivo
+                            <label htmlFor="filePdf" className="block text-sm font-medium text-gray-700 mb-2">
+                                Img domicilio
                             </label>
-                            <div className="flex items-center space-x-2">
-                                <label htmlFor="archivo" className="cursor-pointer text-green-600 font-medium hover:text-green-700">
-                                    Seleccionar archivo
-                                </label>
-                                <input
-                                    type="file"
-                                    id="archivo"
-                                    name="archivo"
-                                    onChange={handleChange}
-                                    className="hidden"
-                                />
-                                <span className="text-gray-500 text-sm">{fileName}</span>
-                            </div>
+                            {!formData.archivo ? (
+                                <div className="flex flex-col">
+                                    <input
+                                        type="file"
+                                        id="archivo"
+                                        name="archivo"
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                archivo: ""
+                                            }));
+                                        }}
+                                        className="bg-green-800 px-3 py-2 rounded-md text-white w-full"
+                                    >
+                                        <Trash className="h-4 w-4 text-white inline mr-1" />
+                                        Eliminar imagen
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <label htmlFor="filePdf" className="block text-sm font-medium text-gray-700 mb-2">
+                                Documento
+                            </label>
+                            {!namePDF ? (
+                                <div className="flex flex-col">
+                                    <input
+                                        type="file"
+                                        id="filePdf"
+                                        name="filePdf"
+                                        accept="application/pdf"
+                                        onChange={onPdfChange}
+                                        className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 file:mr-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-green-700 hover:file:bg-white"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNamePDF("")}
+                                        className="bg-green-800 px-3 py-2 rounded-md text-white w-full"
+                                    >
+                                        <Trash className="h-4 w-4 text-white inline mr-1" />
+                                        Eliminar PDF
+                                    </button>
+                                    {pdfUploading && <span className="text-xs text-gray-500">Subiendo…</span>}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label htmlFor="distinguido" className="block text-sm font-medium text-gray-700 mb-1">

@@ -34,7 +34,7 @@ export default function NewDistrictForm() {
 
     const [insertDistrict, { loading: loadingUpdate}] = useMutation(INSERT_DISTRICT);
    
-    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: " no-cache"});
+    const { loading: loadingMunicipios, error: errorMunicipios, data: dataMunicipios } = useQuery(MUNICIPIOS_LIST, {fetchPolicy: "no-cache"});
 
     const handleChange = (e) => {
         const { name, value } = e.target

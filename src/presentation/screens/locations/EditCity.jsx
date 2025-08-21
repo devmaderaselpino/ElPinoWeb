@@ -33,7 +33,7 @@ export default function EditCity() {
     const { loading, error: errorInfo, data } = useQuery(CITY_INFO, {
         variables: {
             idMunicipio: parseInt(idCiudad)
-        }, fetchPolicy: " no-cache"
+        }, fetchPolicy: "no-cache"
     });
 
     const [updateCity, { loading: loadingUpdate}] = useMutation(UPDATE_CITY);

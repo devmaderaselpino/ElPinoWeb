@@ -71,9 +71,9 @@ const LocationList = () => {
     const skip = (currentPage - 1) * itemsPerPage;
     const skip2 = (currentPage2 - 1) * itemsPerPage;
 
-    const [getMunicipios, { loading: loadingMunicipios, data: dataMunicipios, error: errorMunicipios }] = useLazyQuery(MUNICIPIOS_PAGINATED, {fetchPolicy:" no-cache"});
+    const [getMunicipios, { loading: loadingMunicipios, data: dataMunicipios, error: errorMunicipios }] = useLazyQuery(MUNICIPIOS_PAGINATED, {fetchPolicy:"no-cache"});
 
-    const [getColonias, { loading: loadingColonias, data: dataColonias, error: errorColonias }] = useLazyQuery(COLONIAS_PAGINATED, {fetchPolicy:" no-cache"});
+    const [getColonias, { loading: loadingColonias, data: dataColonias, error: errorColonias }] = useLazyQuery(COLONIAS_PAGINATED, {fetchPolicy:"no-cache"});
 
     const [deleteCity, { loading: loadingDeleteCity}] = useMutation(DELETE_MUNICIPIO);
 
