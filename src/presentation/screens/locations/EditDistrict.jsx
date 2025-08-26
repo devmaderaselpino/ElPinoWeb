@@ -87,7 +87,7 @@ export default function EditDistrict() {
     const validate = () => {
         const newErrors = {}
         if (!formData.municipio) newErrors.municipio = "Debe seleccionar un municipio."
-        if (!formData.codigoPostal.trim()) newErrors.codigoPostal = "El código postal es obligatorio."
+        if (!formData.codigoPostal.toString().trim()) newErrors.codigoPostal = "El código postal es obligatorio."
         if (!formData.nombreColonia.trim()) newErrors.nombreColonia = "El nombre de la colonia es obligatorio."
         return newErrors
     }
@@ -154,6 +154,9 @@ export default function EditDistrict() {
     if(error || errorMunicipios) {
         return  <ErrorPage message={"Inténtelo más tarde."}/>
     }
+
+    console.log(formData.codigoPostal);
+    
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">

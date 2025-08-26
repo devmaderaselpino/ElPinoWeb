@@ -119,8 +119,8 @@ const ClientsList = () => {
     const totalPages = Math.ceil(total / itemsPerPage);
 
     return(
-        <div className="flex justify-center items-center flex-col mt-10">
-            <div className="flex w-9/10 justify-between items-center mb-8">
+        <div className="flex justify-center items-center flex-col">
+            <div className="flex w-9/10 justify-between items-center mb-8 mt-15">
                 <div>
                     <h1 className="lg:text-4xl md:text-4xl text-2xl font-bold text-gray-800 mb-2">Lista de Clientes</h1>
                 </div>

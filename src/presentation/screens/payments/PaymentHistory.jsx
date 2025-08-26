@@ -6,6 +6,8 @@ import { PaymentTable } from '../../components/payments/PaymentTable';
 import { PaymentSummary } from '../../components/payments/PaymentSummary';
 import { HandCoins } from 'lucide-react';
 import Swal from "sweetalert2";
+import Loading from '../../components/shared/Loading';
+import ErrorPage from '../../components/shared/ErrorPage';
 
 const GET_ABONOS = gql`
     query GetAbonos {
@@ -65,8 +67,19 @@ const HistorialAbonos = () => {
         setCurrentPage(1);
     }, [abonos, searchQuery, selectedClient, startDate, endDate]);
 
-    if (loading || loadingCancel) return <div className="p-4">Cargando abonos...</div>;
-    if (error) return <div className="p-4 text-red-600">Error al cargar abonos</div>;
+    if (loading || loadingCancel) {
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
+    }
+    
+        
+    if (error){
+        return <ErrorPage message={"Inténtelo más tarde."}/>
+    }
 
     const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
     const paginatedPayments = filteredPayments.slice(
@@ -135,7 +148,7 @@ const HistorialAbonos = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-7x">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-10">
                 <h1 className="text-2xl font-bold text-gray-800 flex items-center">
                     <HandCoins className="h-7 w-7 mr-3 text-primary-600" />
                     Historial de Abonos

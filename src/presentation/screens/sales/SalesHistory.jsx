@@ -5,6 +5,8 @@ import { parseISO, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import SalesTable from '../../components/sales/SalesTable';
 import SalesFilters from '../../components/sales/SalesFilters';
 import SalesSummary from '../../components/sales/SalesSummary';
+import Loading from '../../components/shared/Loading';
+import ErrorPage from '../../components/shared/ErrorPage';
 
 const GET_VENTAS = gql`
     query GetVentas {
@@ -57,14 +59,21 @@ const SalesHistory = () => {
         currentPage * itemsPerPage
     );
 
-    if (loading) return <div className="p-8 text-center">Cargando ventas...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Error al cargar ventas</div>;
+    if (loading){
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
+    }
+    if (error) return <ErrorPage message={"Inténtelo más tarde."}/>
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-8xl">
             
             <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-4 mt-10">
                     <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
                     <TrendingUp className="h-8 w-8 text-green-700" />
                     </div>

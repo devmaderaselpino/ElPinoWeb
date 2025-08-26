@@ -3,6 +3,8 @@ import { Search,CirclePlus } from 'lucide-react';
 import CollectorSelector from './CollectorSelector';
 import RoutesContainer from './RoutesContainer';
 import UnassignedClientsContainer from './UnassignedClientsContainer';
+import Loading from '../shared/Loading';
+import ErrorPage from '../shared/ErrorPage';
 
 const RouteAssignmentDashboard = ({ selectedCollectorId, onCollectorSelect, searchQuery, setSearchQuery, rutas, clientesSinAsignar, loading, error, refetchRutas,refetchClientesSinAsignar,crearRuta,}) => {
     const handleCrearRuta = async (idCobrador) => {
@@ -47,8 +49,13 @@ const RouteAssignmentDashboard = ({ selectedCollectorId, onCollectorSelect, sear
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-gray-500">Cargando clientes...</p>}
-                    {error && <p className="text-sm text-red-500">Error al cargar datos.</p>}
+                    {loading && 
+                        <div className="min-h-screen flex items-center justify-center flex-col">
+                            <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                            <Loading variant="wave" size="lg" color="green" />
+                        </div>
+                    }
+                    {error && <ErrorPage message={"Inténtelo más tarde."}/>}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">

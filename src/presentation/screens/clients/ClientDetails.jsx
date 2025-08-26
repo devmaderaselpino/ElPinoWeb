@@ -127,9 +127,12 @@ const ClientDetails = () => {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
+    console.log(dataClient.getClient.url);
+    
+
     return(
         <div className="mt-10">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl w-full mx-auto mb-10 mt-15">
                 <div className="bg-gray-600 p-6 flex items-center">
                     <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 border-4 border-white overflow-hidden">
                         <div className="h-full w-full flex items-center justify-center bg-green-100 text-black text-2xl font-bold">
@@ -207,15 +210,18 @@ const ClientDetails = () => {
                         </div>
                     </div>
                 </div>
+                
                 <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t border-gray-100">
                     <button onClick={ ()=> { navigate(`/EditarCliente/${dataClient.getClient.idCliente}`)} } className="bg-green-700 inline-flex items-center px-3 py-1 border text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
                         <Edit size={18} />
                     </button>
-                    <a href={dataClient.getClient.url} download target="_blank">
-                        <button className="inline-flex items-center px-3 py-1 border bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
-                            <Download size={18} />
-                        </button>
-                    </a>
+                    {dataClient.getClient.url ? 
+                        <a href={dataClient.getClient.url} download target="_blank">
+                            <button className="inline-flex items-center px-3 py-1 border bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-200 text-sm">
+                                <Download size={18} />
+                            </button>
+                        </a>
+                    : null}
                 </div>
             </div>
             <PurchaseHistory purchases={dataSales.getSalesByClient} stats={dataStats.getClientStats} status={statusFilter} setStatus={setStatusFilter}/>

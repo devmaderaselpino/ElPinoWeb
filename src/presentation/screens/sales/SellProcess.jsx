@@ -305,8 +305,8 @@ export default function SellProcess() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto h-screen bg-white p-6">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto min-h-screen bg-white p-6">
+            <div className="mb-8 mt-10">
                 <div className="flex items-center w-full">
                     {[1, 2, 3, 4].map((step, index) => (
                         <React.Fragment key={step}>
@@ -634,7 +634,7 @@ export default function SellProcess() {
                 </div>
                 )}
             </div>
-            <div className="flex justify-between mt-8">
+            <div className="flex justify-between mt-10">
                 <button
                     onClick={prevStep}
                     disabled={currentStep === 1}

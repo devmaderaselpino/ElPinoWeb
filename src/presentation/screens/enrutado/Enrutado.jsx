@@ -177,7 +177,7 @@ const Enrutado = () => {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-6 mt-10">
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}

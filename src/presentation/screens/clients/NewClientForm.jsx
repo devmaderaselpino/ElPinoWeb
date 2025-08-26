@@ -69,7 +69,7 @@ export default function NewClientForm() {
     })
 
     const [errors, setErrors] = useState({});
-    const [fileName, setFileName] = useState("Sin archivos seleccionados");
+    const [fileName, setFileName] = useState("");
 
     const { loading: loadingColonias, error: errorColonias, data: dataColonias } = useQuery(COLONIAS_LIST, {
         variables: {

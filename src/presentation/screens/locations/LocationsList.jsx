@@ -227,8 +227,8 @@ const LocationList = () => {
     }
 
     return(
-        <div className="flex justify-center items-center flex-col mt-10">
-            <div className="flex w-9/10 justify-between items-center mb-8">
+        <div className="flex justify-center items-center flex-col">
+            <div className="flex w-9/10 justify-between items-center mb-8 mt-15">
                 <div>
                     <h1 className="lg:text-4xl md:text-4xl text-2xl font-bold text-gray-800 mb-2">Lista de Ubicaciones</h1>
                 </div>
@@ -630,50 +630,87 @@ const LocationList = () => {
                 </div>
             </div>
             
-            {tabActive === 1 && Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage) > 1 ?  
-                <div className="hidden sm:flex justify-center items-center mt-16">
-                    {Array.from({ length: Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage) }).map((_, index) => (
-                        tabActive === 1 && (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentPage2(index + 1)}
-                                className={`px-4 py-2 shadow-md rounded ${
-                                currentPage2 === index + 1
-                                    ? 'bg-green-800 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                                }`}
-                            >
-                                {index + 1}
-                            </button>
-                        )
-                    ))}
-                </div> 
-                : 
-                null
-            }
-
-            
-            {tabActive === 2 && Math.ceil(dataColonias?.getColoniasPaginated?.total / itemsPerPage) > 1 ?  
-                <div className="hidden sm:flex justify-center items-center mt-16 mb-10">
-                    {Array.from({ length: Math.ceil(dataColonias?.getColoniasPaginated?.total / itemsPerPage) }).map((_, index) => (
-                        tabActive === 2 && (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentPage(index + 1)}
-                                className={`px-4 py-2 shadow-md rounded ${
-                                currentPage === index + 1
-                                    ? 'bg-green-800 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                                }`}
-                            >
-                                {index + 1}
-                            </button>
-                        )
-                    ))}
+            {tabActive === 1 && Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage) > 1 ? (
+                <div className="hidden sm:flex justify-center items-center mt-16 mb-10 gap-2">
+                    {Math.ceil(currentPage2 / 10) > 1 && (
+                        <button
+                            onClick={() => setCurrentPage2(Math.max(1, (Math.ceil(currentPage2 / 10) - 2) * 10 + 1))}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
+                        >
+                            ...
+                        </button>
+                    )}
+        
+    
+                    {Array.from({ length: Math.min(10, Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage) - Math.floor((currentPage2 - 1) / 10) * 10) })
+                        .map((_, index) => {
+                            const pageNumber = Math.floor((currentPage2 - 1) / 10) * 10 + index + 1;
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setCurrentPage2(pageNumber)}
+                                    className={`px-4 py-2 shadow-md rounded ${
+                                    currentPage2 === pageNumber
+                                        ? 'bg-green-800 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })
+                    }
+                    {Math.ceil(currentPage2 / 10) < Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage / 10) && (
+                        <button
+                            onClick={() => setCurrentPage2(Math.ceil(currentPage2 / 10) * 10 + 1)}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
+                        >
+                            ...
+                        </button>
+                    )}
                 </div>
-                : 
-                null
-            }
+            ) : null}
+
+            {tabActive === 2 && Math.ceil(dataColonias?.getColoniasPaginated?.total / itemsPerPage) > 1 ? (
+                <div className="hidden sm:flex justify-center items-center mt-16 mb-10 gap-2">
+                    {Math.ceil(currentPage / 10) > 1 && (
+                        <button
+                            onClick={() => setCurrentPage(Math.max(1, (Math.ceil(currentPage / 10) - 2) * 10 + 1))}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
+                        >
+                            ...
+                        </button>
+                    )}
+        
+    
+                    {Array.from({ length: Math.min(10, Math.ceil(dataColonias?.getColoniasPaginated?.total / itemsPerPage) - Math.floor((currentPage - 1) / 10) * 10) })
+                        .map((_, index) => {
+                            const pageNumber = Math.floor((currentPage - 1) / 10) * 10 + index + 1;
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setCurrentPage(pageNumber)}
+                                    className={`px-4 py-2 shadow-md rounded ${
+                                    currentPage === pageNumber
+                                        ? 'bg-green-800 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })
+                    }
+                    {Math.ceil(currentPage / 10) < Math.ceil(dataColonias?.getColoniasPaginated?.total  / itemsPerPage / 10) && (
+                        <button
+                            onClick={() => setCurrentPage(Math.ceil(currentPage / 10) * 10 + 1)}
+                            className="px-3 py-2 shadow-md rounded bg-white text-gray-700 hover:bg-gray-100"
+                        >
+                            ...
+                        </button>
+                    )}
+                </div>
+            ) : null}
 
             {tabActive === 1 && Math.ceil(dataMunicipios?.getMunicipiosPaginated?.total / itemsPerPage) > 1? 
                 <div className="sm:hidden flex flex-row justify-around items-center w-9/10 mt-10 mb-10">

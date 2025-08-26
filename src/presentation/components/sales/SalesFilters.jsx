@@ -151,7 +151,7 @@ const SalesFilters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter
 
                 <select
                     value={tipoFilter}
-                    onChange={(e) => setTipoFilter(e.target.value)}
+                    onChange={(e) => {setTipoFilter(e.target.value); setCurrentPage(1)}}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 >
                     <option value="todos">Todos los tipos</option>
@@ -164,7 +164,7 @@ const SalesFilters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <select
                         value={dateRange}
-                        onChange={(e) => setDateRange(e.target.value)}
+                        onChange={(e) => {setDateRange(e.target.value); setCurrentPage(1)}}
                         className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                     >
                         <option value="todos">Todas las fechas</option>

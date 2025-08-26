@@ -117,9 +117,8 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="w-full  h-screen flex justify-center">
-            
-            <div className="w-full max-w-7xl mx-auto p-6">
+        <div className="w-full  min-h-screen flex justify-center">
+            <div className="w-full max-w-7xl mx-auto p-6 mt-10">
                 <div className="flex items-center justify-center gap-4 mb-4">
                     <button className="p-3 bg-white rounded-full shadow-md" onClick={() => setActiveTab(1)}>
                         <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

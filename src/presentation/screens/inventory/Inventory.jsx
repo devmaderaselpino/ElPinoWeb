@@ -7,6 +7,8 @@ import StockAdjustment from '../../components/inventory/StockAdjustment';
 import NotificationButton from '../../components/inventory/NotificationButton';
 import EditProductForm from '../../components/inventory/EditProductForm';
 import Swal from "sweetalert2";
+import Loading from '../../components/shared/Loading';
+import ErrorPage from '../../components/shared/ErrorPage';
 
 const GET_PRODUCTOS_INVENTARIOS = gql`
     query GetProductosInventarios {
@@ -353,13 +355,17 @@ useEffect(() => {
         p => p.stock_rosario < p.min_stock_rosario || p.stock_escuinapa < p.min_stock_escuinapa
     ).length;
 
-    if (loading || categoriasLoading) return <p className="text-center mt-10 text-gray-500">Cargando productos y categorías...</p>;
+    if (loading || categoriasLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
+                <Loading variant="wave" size="lg" color="green" />
+            </div>
+        );
+    }
 
     if (error || categoriasError) {
-        console.log(error)
-        console.error("Error productos:", error);
-        console.error("Error categorías:", categoriasError);
-        return <p className="text-center mt-10 text-red-500">Error al cargar inventario o categorías.</p>;
+        return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
     const handleCreateProduct = (newProductData) => {
@@ -462,7 +468,7 @@ useEffect(() => {
         <div className="min-h-screen bg-white p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-10">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                             <Package className="h-8 w-8 text-green-800" />
