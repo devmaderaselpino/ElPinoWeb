@@ -153,7 +153,8 @@ const CancelProcess = () => {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         refetch(),
-                        refetchP()
+                        refetchP(),
+                        setMotivo(0)
                     }
                 }); 
                
@@ -307,6 +308,11 @@ const CancelProcess = () => {
     if(error || errorP) {
         return <ErrorPage message={"Inténtelo más tarde."}/>
     }
+
+    console.log(cancellationArray.length)
+    console.log(motivo)
+    console.log(saldo);
+    
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -505,7 +511,8 @@ const CancelProcess = () => {
                 
                 {(
                     (cancellationArray.length > 0 && motivo !== 2) ||
-                    (cancellationArray.length > 0 && motivo === 2 && parseInt(saldo) !== 0)
+                    (cancellationArray.length > 0 && motivo === 2 && parseInt(saldo) !== 0 && dataP.getPorcentajePagado.abonos_total > 0) ||
+                    (cancellationArray.length > 0 && motivo === 2 && parseInt(saldo) === 0 && dataP.getPorcentajePagado.abonos_total === 0)
                 )  && (
                     <div className="text-center mb-8">
                         <button

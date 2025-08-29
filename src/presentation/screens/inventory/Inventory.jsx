@@ -6,25 +6,25 @@ import ProductForm from '../../components/inventory/ProductForm';
 import StockAdjustment from '../../components/inventory/StockAdjustment';
 import NotificationButton from '../../components/inventory/NotificationButton';
 import EditProductForm from '../../components/inventory/EditProductForm';
+import Loading from "../../components/shared/Loading";
+import ErrorPage from "../../components/shared/ErrorPage";
 import Swal from "sweetalert2";
-import Loading from '../../components/shared/Loading';
-import ErrorPage from '../../components/shared/ErrorPage';
 
 const GET_PRODUCTOS_INVENTARIOS = gql`
     query GetProductosInventarios {
-  GetProductosInventarios {
-    idProducto
-    nombre
-    categoria
-    precio
-    stock_rosario
-    min_stock_rosario
-    stock_escuinapa
-    min_stock_escuinapa
-    status
-    img_producto
-  }
-}
+        GetProductosInventarios {
+            idProducto
+            nombre
+            categoria
+            precio
+            img_producto
+            stock_rosario
+            min_stock_rosario
+            stock_escuinapa
+            min_stock_escuinapa
+            status
+        }
+    }
 `;
 
 const GET_CATEGORIAS = gql`
@@ -71,7 +71,7 @@ const CREAR_PRODUCTO_CON_INVENTARIOS = gql`
     }
 `;
 
-const ACTUALIZAR_STOCK_ESCINAPA = gql`
+const ACTUALIZAR_STOCK_ESCUINAPA = gql`
     mutation ActualizarStockEscuinapa(
         $idProducto: Int!
         $nuevoStock: Int!
@@ -171,10 +171,18 @@ const Inventory = () => {
    const [movimientos, setMovimientos] = useState([]);
    const [unreadCount, setUnreadCount] = useState(0); 
 
-    const { data, loading, error, refetch } = useQuery(GET_PRODUCTOS_INVENTARIOS);
-    const { data: ajustesData, loading: ajustesLoading, error: ajustesError } = useQuery(GET_HISTORIAL_AJUSTES);
+    const { data, loading, error, refetch } = useQuery(GET_PRODUCTOS_INVENTARIOS, {
+    fetchPolicy: "network-only",  
+  });
+    const { data: ajustesData, loading: ajustesLoading, error: ajustesError ,refetch: refetchHistorial} = useQuery(GET_HISTORIAL_AJUSTES
+        , {
+    fetchPolicy: "network-only",  
+  }
+    );
     
-    const { data: categoriasData, loading: categoriasLoading, error: categoriasError, refetch: refetchCategories } = useQuery(GET_CATEGORIAS, {fetchPolicy:"no-cache"});
+    const { data: categoriasData, loading: categoriasLoading, error: categoriasError, refetch: refetchCategories } = useQuery(GET_CATEGORIAS, {
+    fetchPolicy: "network-only",  
+  });
     const [updateProducto, { loading: updateLoading, error: updateError }] = useMutation(UPDATE_PRODUCTO, {
             onCompleted: (data) => {
             Swal.fire({
@@ -250,7 +258,7 @@ const Inventory = () => {
         setShowEditProductForm(true);
     };
      const handleEditClick = (product) => {
-    onEditProduct(product); // Llama la función onEditProduct pasada como prop
+    onEditProduct(product); 
    };
     const handleCloseEditProductForm = () => {
         setShowEditProductForm(false);
@@ -259,12 +267,12 @@ const Inventory = () => {
 
     const handleUpdateProduct = (formData) => {
  
-     console.log("Producto a actualizar:", selectedProduct); // Verifica que selectedProduct tiene los datos correctos
-    console.log("idProducto:", selectedProduct?.idProducto); // Asegúrate de que idProducto esté presente
+     console.log("Producto a actualizar:", selectedProduct);
+    console.log("idProducto:", selectedProduct?.idProducto); 
 
     if (!selectedProduct || !selectedProduct.idProducto) {
         console.error("Error: idProducto no está presente");
-        return;  // Si no está presente, salimos de la función
+        return;  
     }
 
 
@@ -300,8 +308,24 @@ const Inventory = () => {
         }
     });
 
-    const [actualizarStockEscuinapa] = useMutation(ACTUALIZAR_STOCK_ESCINAPA);
-    const [actualizarStockRosario] = useMutation(ACTUALIZAR_STOCK_ROSARIO);
+      const [actualizarStockEscuinapa] = useMutation(ACTUALIZAR_STOCK_ESCUINAPA, {
+        onCompleted: () => {
+            
+            refetchHistorial();
+        },
+        onError: (error) => {
+            console.error("Error ajustando stock Escuinapa", error);
+        }
+    });
+   const [actualizarStockRosario] = useMutation(ACTUALIZAR_STOCK_ROSARIO, {
+        onCompleted: () => {
+          
+            refetchHistorial();
+        },
+        onError: (error) => {
+            console.error("Error ajustando stock Rosario", error);
+        }
+    });
     const [activarProducto] = useMutation(ACTIVAR_PRODUCTO);
     
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -355,17 +379,17 @@ useEffect(() => {
         p => p.stock_rosario < p.min_stock_rosario || p.stock_escuinapa < p.min_stock_escuinapa
     ).length;
 
-    if (loading || categoriasLoading) {
-        return (
+    if (loading || categoriasLoading) return (
             <div className="min-h-screen flex items-center justify-center flex-col">
                 <h1 className="text-3xl font-bold text-gray-800 mb-5">Cargando</h1>
                 <Loading variant="wave" size="lg" color="green" />
             </div>
         );
-    }
 
     if (error || categoriasError) {
-        return <ErrorPage message={"Inténtelo más tarde."}/>
+    console.error("Error productos:", error);
+    console.error("Error categorías:", categoriasError);
+     return <ErrorPage message={"Inténtelo más tarde."}/>
     }
 
     const handleCreateProduct = (newProductData) => {
@@ -391,9 +415,9 @@ useEffect(() => {
             const files = e.target.files;
             const data = new FormData();
             data.append('file', files[0]);
-            data.append('upload_preset', 'elpino');
+            data.append('upload_preset', 'elpinotumbado');
 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/dv1kiff9a/image/upload`, {
+            const response = await fetch('https://api.cloudinary.com/v1_1/dqh6utbju/image/upload', {
             method: 'POST',
             body: data,
             });
@@ -407,7 +431,7 @@ useEffect(() => {
 
 
             const disableButtons = (product) => {
-            return product.status === 0; // o cualquier lógica que desees
+            return product.status === 0; 
             };
 
       const handleStockAdjustment = async (productId, location, newStock, nota, idUsuario) => {
@@ -442,14 +466,14 @@ useEffect(() => {
                             }));
                         }
 
-                        // Refetch para obtener los movimientos más recientes
+                       
                         const result = await refetch(); 
                           console.log("Refetch result:", result);
-                        // Verificar que result.data.getHistorialAjustes no sea undefined y que sea un array
-                        const nuevosMovimientos = result.data?.getHistorialAjustes || [];  // Usar un array vacío como valor predeterminado si no se obtiene la respuesta esperada
                         
-                        setMovimientos(nuevosMovimientos);  // Actualizamos el estado de movimientos
-                        setUnreadCount(nuevosMovimientos.length);  // Actualizamos el contador de notificaciones
+                        const nuevosMovimientos = result.data?.getHistorialAjustes || [];  
+                        
+                        setMovimientos(nuevosMovimientos); 
+                        setUnreadCount(nuevosMovimientos.length);  
                     } catch (error) {
                         console.error("Error ajustando el stock:", error);
                     }
@@ -460,7 +484,7 @@ useEffect(() => {
   
 
     const handleOpenStockAdjustment = (product) => {
-         console.log("Producto seleccionado:", product); 
+         
         setSelectedProduct(product);
     };
 
@@ -468,7 +492,7 @@ useEffect(() => {
         <div className="min-h-screen bg-white p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                             <Package className="h-8 w-8 text-green-800" />
@@ -600,6 +624,7 @@ useEffect(() => {
                         setProduct={setSelectedProduct}
                         onAdjust={handleStockAdjustment}
                         onClose={() => setSelectedProduct(null)}
+                         refetchHistorial={refetchHistorial}
                     />
                 )}
 
