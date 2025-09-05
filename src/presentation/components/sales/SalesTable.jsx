@@ -65,14 +65,6 @@ const SalesTable = ({ ventas = [] }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-MX', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        });
-    };
 
     if (ventas.length === 0) {
         return (
@@ -122,7 +114,7 @@ const SalesTable = ({ ventas = [] }) => {
                         {ventas.map((venta, index) => (
                             <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                                 <td className="px-6 py-4 text-sm text-gray-900">
-                                    {formatDate(venta.fecha)}
+                                    {venta.fecha}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-gray-900">{venta.cliente}</div>
