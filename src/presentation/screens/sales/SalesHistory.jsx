@@ -17,6 +17,7 @@ const GET_VENTAS = gql`
             total
             tipo
             status
+            cantidad_cancelada
         }
     }
 `;

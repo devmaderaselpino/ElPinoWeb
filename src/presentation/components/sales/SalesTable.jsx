@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, User, Package, CreditCard, Check, Clock, X } from 'lucide-react';
+import formatPrice from '../../../functions/FormatPrice';
 
 const SalesTable = ({ ventas = [] }) => {
     const getStatusBadge = (status) => {
@@ -126,7 +127,7 @@ const SalesTable = ({ ventas = [] }) => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-semibold text-gray-900">
-                                        ${venta.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                        {venta.status !== "Cancelada" ? formatPrice(venta.total)  : formatPrice(venta.cantidad_cancelada)}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">{getTipoBadge(venta.tipo)}</td>
