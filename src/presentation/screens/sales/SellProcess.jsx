@@ -526,7 +526,7 @@ export default function SellProcess() {
                                 <h3 className="text-xl font-semibold mb-2">6 Meses</h3>
                                 <p className="text-3xl font-bold text-green-600 mb-2">{getMonthlyPayment(6)}/mes</p>
                             </div>
-                            {getTotalAmountContado() > 3500 ? <div
+                            {getTotalAmountContado() > 2450 ? <div
                                 className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
                                 paymentPlan === 12 ? "border-green-500 bg-white" : "border-gray-200 hover:border-gray-300"
                                 }`}
